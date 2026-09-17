@@ -1,0 +1,256 @@
+// prisma/schema.prisma
+// ==========================================================================
+// Prisma Schema — Clinic Information System
+// Batch 1: Authentication, Auth Tokens, Actor, Master (Specializations)
+// Prisma ORM 7.x — provider "prisma-client" (Rust-free client, wajib adapter)
+// ==========================================================================
+
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "cjs"
+}
+
+// Catatan: di Prisma 7, connection string TIDAK lagi diletakkan di sini.
+// Koneksi untuk keperluan CLI (migrate/db pull) dikonfigurasi lewat
+// prisma.config.ts, dan koneksi untuk runtime app diteruskan langsung
+// ke driver adapter (lihat prisma.service.ts).
+datasource db {
+  provider = "postgresql"
+}
+
+// --------------------------------------------------------------------------
+// ENUMS
+// --------------------------------------------------------------------------
+
+enum Role {
+  PATIENT
+  DOCTOR
+  APOTHECARY
+  ADMIN
+}
+
+enum Gender {
+  PRIA
+  WANITA
+}
+
+// Catatan kritis (lihat penjelasan di chat): hanya 4 nilai sesuai spesifikasi
+// asli. Tanpa faktor Rhesus (+/-), nilai ini tidak lengkap secara klinis.
+enum BloodType {
+  A
+  B
+  AB
+  O
+}
+
+enum PatientStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum DoctorStatus {
+  PENDING_VERIFICATION
+  ACTIVE
+  INACTIVE
+}
+
+enum ApothecaryStatus {
+  PENDING_VERIFICATION
+  ACTIVE
+  INACTIVE
+}
+
+enum SpecializationStatus {
+  ACTIVE
+  INACTIVE
+}
+
+// --------------------------------------------------------------------------
+// 1. AUTHENTICATION & IDENTITY
+// --------------------------------------------------------------------------
+
+model User {
+  id                  String    @id @default(cuid(2)) @db.VarChar(25)
+  username            String    @unique @db.VarChar(50)
+  email               String    @unique @db.VarChar(100)
+  passwordHash        String    @map("password_hash")
+  role                Role
+  emailVerifiedAt     DateTime? @map("email_verified_at")
+  failedLoginAttempts Int       @default(0) @map("failed_login_attempts") @db.SmallInt
+  lockedUntil         DateTime? @map("locked_until")
+  lastLoginAt         DateTime? @map("last_login_at")
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
+  deletedAt           DateTime? @map("deleted_at")
+
+  // Relasi 1:1 ke actor & profil
+  profile    Profile?
+  patient    Patient?
+  doctor     Doctor?
+  apothecary Apothecary?
+  admin      Admin?
+
+  // Relasi 1:N ke token
+  refreshTokens           RefreshToken[]
+  passwordResetTokens     PasswordResetToken[]
+  emailVerificationTokens EmailVerificationToken[]
+
+  // Relasi balik untuk kolom verified_by di doctors/apothecaries.
+  // PENTING: FK ini hanya menjamin baris users ada — TIDAK menjamin
+  // role user tersebut ADMIN. Validasi role wajib dilakukan di
+  // application layer (mis. di use-case VerifyDoctor).
+  verifiedDoctors      Doctor[]     @relation("DoctorVerifier")
+  verifiedApothecaries Apothecary[] @relation("ApothecaryVerifier")
+
+  @@index([role])
+  @@index([deletedAt])
+  @@map("users")
+}
+
+model Profile {
+  userId        String    @id @map("user_id") @db.VarChar(25)
+  fullName      String    @map("full_name") @db.VarChar(100)
+  phone         String?   @db.VarChar(20)
+  dateOfBirth   DateTime? @map("date_of_birth") @db.Date
+  gender        Gender?
+  address       String?   @db.VarChar(255)
+  avatarProfile String?   @map("avatar_profile")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("profiles")
+}
+
+// --------------------------------------------------------------------------
+// 2. AUTH TOKENS
+// --------------------------------------------------------------------------
+
+model RefreshToken {
+  id         String    @id @default(cuid(2)) @db.VarChar(25)
+  userId     String    @map("user_id") @db.VarChar(25)
+  tokenHash  String    @map("token_hash")
+  deviceInfo String?   @map("device_info") @db.VarChar(255)
+  ipAddress  String?   @map("ip_address") @db.VarChar(45)
+  expiresAt  DateTime? @map("expires_at")
+  revokedAt  DateTime? @map("revoked_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Index ganda: pencarian token aktif milik satu user (logout-all-devices),
+  // dan pembersihan berkala token kedaluwarsa (cron cleanup job).
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("refresh_tokens")
+}
+
+model PasswordResetToken {
+  id         String    @id @default(cuid(2)) @db.VarChar(25)
+  userId     String    @map("user_id") @db.VarChar(25)
+  tokenHash  String    @map("token_hash")
+  expiresAt  DateTime? @map("expires_at")
+  usedAt     DateTime? @map("used_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("password_reset_tokens")
+}
+
+model EmailVerificationToken {
+  id         String    @id @default(cuid(2)) @db.VarChar(25)
+  userId     String    @map("user_id") @db.VarChar(25)
+  tokenHash  String    @map("token_hash")
+  expiresAt  DateTime? @map("expires_at")
+  usedAt     DateTime? @map("used_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("email_verification_tokens")
+}
+
+// --------------------------------------------------------------------------
+// 3. ACTOR
+// --------------------------------------------------------------------------
+
+model Patient {
+  userId              String        @id @map("user_id") @db.VarChar(25)
+  medicalRecordNumber String        @unique @map("medical_record_number") @db.VarChar(30)
+  bloodType           BloodType?    @map("blood_type")
+  status              PatientStatus @default(ACTIVE)
+  registeredAt        DateTime      @map("registered_at")
+  createdAt           DateTime      @default(now()) @map("created_at")
+  updatedAt           DateTime      @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("patients")
+}
+
+model Doctor {
+  userId           String       @id @map("user_id") @db.VarChar(25)
+  sip              String       @unique @db.VarChar(30)
+  specializationId String       @map("specialization_id") @db.VarChar(25)
+  status           DoctorStatus @default(PENDING_VERIFICATION)
+  verifiedAt       DateTime?    @map("verified_at")
+  verifiedBy       String?      @map("verified_by") @db.VarChar(25)
+  createdAt        DateTime     @default(now()) @map("created_at")
+  updatedAt        DateTime     @updatedAt @map("updated_at")
+
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  specialization Specialization @relation(fields: [specializationId], references: [id], onDelete: Restrict)
+  verifier       User?          @relation("DoctorVerifier", fields: [verifiedBy], references: [id], onDelete: SetNull)
+
+  @@index([specializationId])
+  @@index([status])
+  @@map("doctors")
+}
+
+model Apothecary {
+  userId        String           @id @map("user_id") @db.VarChar(25)
+  licenseNumber String           @unique @map("license_number") @db.VarChar(30)
+  status        ApothecaryStatus @default(PENDING_VERIFICATION)
+  verifiedAt    DateTime?        @map("verified_at")
+  verifiedBy    String?          @map("verified_by") @db.VarChar(25)
+  createdAt     DateTime         @default(now()) @map("created_at")
+  updatedAt     DateTime         @updatedAt @map("updated_at")
+
+  user     User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  verifier User? @relation("ApothecaryVerifier", fields: [verifiedBy], references: [id], onDelete: SetNull)
+
+  @@index([status])
+  @@map("apothecaries")
+}
+
+model Admin {
+  userId    String   @id @map("user_id") @db.VarChar(25)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("admins")
+}
+
+// --------------------------------------------------------------------------
+// 4. MASTER KLINIK (baru: specializations)
+// --------------------------------------------------------------------------
+
+model Specialization {
+  id          String               @id @default(cuid(2)) @db.VarChar(25)
+  name        String               @unique @db.VarChar(100)
+  description String?
+  status      SpecializationStatus @default(ACTIVE)
+  createdAt   DateTime             @default(now()) @map("created_at")
+  updatedAt   DateTime             @updatedAt @map("updated_at")
+
+  doctors Doctor[]
+
+  @@map("specializations")
+}
