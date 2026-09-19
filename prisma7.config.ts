@@ -1,3 +1,4 @@
+// prisma7.config.ts
 import "dotenv/config";
 import { defineConfig, env } from "prisma/config";
 
