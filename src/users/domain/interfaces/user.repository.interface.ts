@@ -1,5 +1,5 @@
 // src/users/domain/interfaces/user.repository.interface.ts
-import { PrismaTransactionClient } from 'src/prisma/prisma.types';
+import { TransactionContext } from 'src/common/domain/transaction-context';
 import { UserEntity } from '../entities/user.entity';
 
 export interface CreateUserInput {
@@ -15,7 +15,8 @@ export interface CreateUserInput {
 }
 
 export interface IUserRepository {
-  createWithinTransaction(tx: PrismaTransactionClient, input: CreateUserInput): Promise<UserEntity>;
+  createWithinTransaction(tx: TransactionContext, input: CreateUserInput): Promise<UserEntity>;
   markEmailVerified(userId: string): Promise<void>;
   findById(id: string): Promise<UserEntity | null>;
+  findByEmail(email: string): Promise<UserEntity | null>;
 }

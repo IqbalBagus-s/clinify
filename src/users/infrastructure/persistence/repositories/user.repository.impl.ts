@@ -1,6 +1,7 @@
 // src/users/infrastructure/persistence/repositories/user.repository.impl.ts
 import { Injectable } from '@nestjs/common';
 import { Role } from '../../../../generated/prisma/client';
+import { TransactionContext } from 'src/common/domain/transaction-context';
 import { PrismaTransactionClient } from 'src/prisma/prisma.types';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateUserInput, IUserRepository } from 'src/users/domain/interfaces/user.repository.interface';
@@ -11,8 +12,9 @@ import { UserMapper } from '../mappers/user.mapper';
 export class UserRepositoryImpl implements IUserRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async createWithinTransaction(tx: PrismaTransactionClient, input: CreateUserInput): Promise<UserEntity> {
-    const user = await tx.user.create({
+  async createWithinTransaction(tx: TransactionContext, input: CreateUserInput): Promise<UserEntity> {
+    const client = tx as PrismaTransactionClient;
+    const user = await client.user.create({
       data: {
         username: input.username,
         email: input.email,
@@ -38,6 +40,11 @@ export class UserRepositoryImpl implements IUserRepository {
 
   async findById(id: string): Promise<UserEntity | null> {
     const user = await this.prisma.user.findUnique({ where: { id } });
+    return user ? UserMapper.toDomain(user) : null;
+  }
+
+  async findByEmail(email: string): Promise<UserEntity | null> {
+    const user = await this.prisma.user.findUnique({ where: { email } });
     return user ? UserMapper.toDomain(user) : null;
   }
 }
