@@ -1,5 +1,6 @@
 // src/doctors/infrastructure/persistence/repositories/doctor.repository.impl.ts
 import { Injectable } from '@nestjs/common';
+import { TransactionContext } from 'src/common/domain/transaction-context';
 import { PrismaTransactionClient } from 'src/prisma/prisma.types';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateDoctorInput, IDoctorRepository } from 'src/doctors/domain/interfaces/doctor.repository.interface';
@@ -10,8 +11,9 @@ import { DoctorMapper } from '../mappers/doctor.mapper';
 export class DoctorRepositoryImpl implements IDoctorRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async createWithinTransaction(tx: PrismaTransactionClient, input: CreateDoctorInput): Promise<DoctorEntity> {
-    const doctor = await tx.doctor.create({
+  async createWithinTransaction(tx: TransactionContext, input: CreateDoctorInput): Promise<DoctorEntity> {
+    const client = tx as PrismaTransactionClient;
+    const doctor = await client.doctor.create({
       data: {
         userId: input.userId,
         sip: input.sip,

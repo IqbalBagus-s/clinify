@@ -1,5 +1,5 @@
 // src/doctors/domain/interfaces/doctor.repository.interface.ts
-import { PrismaTransactionClient } from 'src/prisma/prisma.types';
+import { TransactionContext } from 'src/common/domain/transaction-context';
 import { DoctorEntity } from '../entities/doctor.entity';
 
 export interface CreateDoctorInput {
@@ -9,6 +9,6 @@ export interface CreateDoctorInput {
 }
 
 export interface IDoctorRepository {
-  createWithinTransaction(tx: PrismaTransactionClient, input: CreateDoctorInput): Promise<DoctorEntity>;
+  createWithinTransaction(tx: TransactionContext, input: CreateDoctorInput): Promise<DoctorEntity>;
   isSpecializationActive(specializationId: string): Promise<boolean>;
 }
