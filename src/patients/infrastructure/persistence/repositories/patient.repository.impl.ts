@@ -1,5 +1,6 @@
 // src/patients/infrastructure/persistence/repositories/patient.repository.impl.ts
 import { Inject, Injectable } from '@nestjs/common';
+import { TransactionContext } from 'src/common/domain/transaction-context';
 import { PrismaTransactionClient } from 'src/prisma/prisma.types';
 import { IPatientRepository } from 'src/patients/domain/interfaces/patient.repository.interface';
 import type { IMedicalRecordNumberGenerator } from 'src/patients/domain/interfaces/medical-record-number-generator.interface';
@@ -14,8 +15,9 @@ export class PatientRepositoryImpl implements IPatientRepository {
     private readonly mrnGenerator: IMedicalRecordNumberGenerator,
   ) {}
 
-  async createWithinTransaction(tx: PrismaTransactionClient, userId: string): Promise<PatientEntity> {
-    const patient = await tx.patient.create({
+  async createWithinTransaction(tx: TransactionContext, userId: string): Promise<PatientEntity> {
+    const client = tx as PrismaTransactionClient;
+    const patient = await client.patient.create({
       data: {
         userId: userId,
         medicalRecordNumber: this.mrnGenerator.generate(),

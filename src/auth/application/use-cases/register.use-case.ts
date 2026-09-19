@@ -1,9 +1,9 @@
 // src/auth/application/use-cases/register.use-case.ts
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { randomBytes, createHash } from 'crypto';
-import { PrismaService } from 'src/prisma/prisma.service';
-import { PrismaTransactionClient } from 'src/prisma/prisma.types';
+import { TRANSACTION_MANAGER } from 'src/common/domain/tokens';
+import type { ITransactionManager } from 'src/common/domain/transaction-manager.interface';
 import { RegisterDto } from '../../presentation/dto/register.dto';
 import { RegisterableRole } from '../../domain/enums/registerable-role.enum';
 import { Email } from '../../domain/value-objects/email.vo';
@@ -21,10 +21,15 @@ import type { IDoctorRepository } from 'src/doctors/domain/interfaces/doctor.rep
 import { APOTHECARY_REPOSITORY } from 'src/apothecaries/domain/interfaces/tokens';
 import type { IApothecaryRepository } from 'src/apothecaries/domain/interfaces/apothecary.repository.interface';
 
+// PERBAIKAN KUNCI: use case ini SEKARANG TIDAK LAGI mengimpor PrismaService
+// sama sekali. Ia hanya bergantung pada ITransactionManager (abstraksi domain).
+// Kalau besok Anda ganti Prisma ke Drizzle/TypeORM, file ini tidak perlu disentuh.
 @Injectable()
 export class RegisterUseCase {
+  private readonly logger = new Logger(RegisterUseCase.name);
+
   constructor(
-    private readonly prisma: PrismaService,
+    @Inject(TRANSACTION_MANAGER) private readonly transactionManager: ITransactionManager,
     private readonly configService: ConfigService,
     @Inject(USER_REPOSITORY) private readonly userRepository: IUserRepository,
     @Inject(PATIENT_REPOSITORY) private readonly patientRepository: IPatientRepository,
@@ -45,9 +50,7 @@ export class RegisterUseCase {
 
     const passwordHash = await this.passwordHasher.hash(dto.password);
 
-    const { userId, status } = await this.prisma.$transaction(async (rawTx) => {
-      const tx = rawTx as unknown as PrismaTransactionClient;
-
+    const { userId, status } = await this.transactionManager.execute(async (tx) => {
       const user = await this.userRepository.createWithinTransaction(tx, {
         username: dto.username,
         email: email.toString(),
@@ -61,24 +64,28 @@ export class RegisterUseCase {
       });
 
       let actorStatus = 'ACTIVE';
-
       if (dto.role === RegisterableRole.PATIENT) {
         const patient = await this.patientRepository.createWithinTransaction(tx, user.id);
         actorStatus = patient.status;
       } else if (dto.role === RegisterableRole.DOCTOR) {
         const doctor = await this.doctorRepository.createWithinTransaction(tx, {
-          userId: user.id, sip: dto.sip!, specializationId: dto.specialization_id!,
+          userId: user.id,
+          sip: dto.sip!,
+          specializationId: dto.specialization_id!,
         });
         actorStatus = doctor.status;
       } else if (dto.role === RegisterableRole.APOTHECARY) {
         const apothecary = await this.apothecaryRepository.createWithinTransaction(tx, {
-          userId: user.id, licenseNumber: dto.license_number!,
+          userId: user.id,
+          licenseNumber: dto.license_number!,
         });
         actorStatus = apothecary.status;
       }
 
       return { userId: user.id, status: actorStatus };
     });
+
+    this.logger.log({ message: 'user_registered', userId, role: dto.role, status });
 
     await this.issueVerificationEmailBestEffort(userId, email.toString());
 
@@ -90,7 +97,6 @@ export class RegisterUseCase {
     const tokenHash = createHash('sha256').update(rawToken).digest('hex');
     const ttlHours = this.configService.get<number>('auth.emailVerificationTokenTtlHours', 24);
     const expiresAt = new Date(Date.now() + ttlHours * 60 * 60 * 1000);
-
     await this.tokenRepository.create(userId, tokenHash, expiresAt);
     await this.emailService.sendVerificationEmail(email, rawToken);
   }

@@ -8,4 +8,5 @@ export enum EmailJobName {
 export interface SendVerificationJobData {
   to: string;
   rawToken: string;
+  correlationId?: string;
 }

@@ -1,10 +1,11 @@
 // src/auth/presentation/guards/rate-limit.guard.ts
-import { CanActivate, ExecutionContext, HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { CanActivate, ExecutionContext, HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { Request } from 'express';
 import { RedisService } from 'src/redis/redis.service';
 
 @Injectable()
 export class RateLimitGuard implements CanActivate {
+  private readonly logger = new Logger(RateLimitGuard.name);
   private readonly limit = 5;
   private readonly windowSeconds = 60;
 
@@ -21,6 +22,14 @@ export class RateLimitGuard implements CanActivate {
     }
 
     if (currentCount > this.limit) {
+      // Sebelumnya percobaan brute-force tidak meninggalkan jejak log sama
+      // sekali — hanya terlihat sebagai counter di Redis yang harus dicek manual.
+      this.logger.warn({
+        message: 'rate_limit_exceeded',
+        route: request.route?.path,
+        ip: request.ip,
+        currentCount,
+      });
       throw new HttpException(
         { statusCode: HttpStatus.TOO_MANY_REQUESTS, errorCode: 'RATE_LIMIT_EXCEEDED', message: 'Terlalu banyak percobaan. Silakan coba lagi nanti.' },
         HttpStatus.TOO_MANY_REQUESTS,
