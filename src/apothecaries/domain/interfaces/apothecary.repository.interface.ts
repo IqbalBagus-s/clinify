@@ -1,5 +1,5 @@
 // src/apothecaries/domain/interfaces/apothecary.repository.interface.ts
-import { PrismaTransactionClient } from 'src/prisma/prisma.types';
+import { TransactionContext } from 'src/common/domain/transaction-context';
 import { ApothecaryEntity } from '../entities/apothecary.entity';
 
 export interface CreateApothecaryInput {
@@ -8,5 +8,5 @@ export interface CreateApothecaryInput {
 }
 
 export interface IApothecaryRepository {
-  createWithinTransaction(tx: PrismaTransactionClient, input: CreateApothecaryInput): Promise<ApothecaryEntity>;
+  createWithinTransaction(tx: TransactionContext, input: CreateApothecaryInput): Promise<ApothecaryEntity>;
 }
