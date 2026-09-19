@@ -1,14 +1,8 @@
 // src/common/filters/all-exceptions.filter.ts
-import {
-  ArgumentsHost,
-  Catch,
-  ExceptionFilter,
-  HttpException,
-  HttpStatus,
-  Logger,
-} from '@nestjs/common';
+import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus, Logger } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { DomainException } from '../exceptions/domain.exception';
+import { RequestContextService } from '../context/request-context.service';
 
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
@@ -18,6 +12,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
+    const correlationId = RequestContextService.getCorrelationId();
 
     let statusCode = HttpStatus.INTERNAL_SERVER_ERROR;
     let errorCode = 'INTERNAL_SERVER_ERROR';
@@ -33,13 +28,19 @@ export class AllExceptionsFilter implements ExceptionFilter {
       errorCode = res?.errorCode ?? 'VALIDATION_ERROR';
       message = res?.message?.toString?.() ?? exception.message;
     } else {
-      this.logger.error(exception instanceof Error ? exception.stack : exception);
+      this.logger.error(
+        { message: 'unhandled_exception', path: request.url, correlationId },
+        exception instanceof Error ? exception.stack : String(exception),
+      );
     }
 
+    // correlationId disertakan di response supaya kalau user melapor error,
+    // Anda tinggal grep log dengan ID ini — tidak perlu menebak-nebak waktu kejadian.
     response.status(statusCode).json({
       statusCode,
       errorCode,
       message,
+      correlationId,
       timestamp: new Date().toISOString(),
       path: request.url,
     });
