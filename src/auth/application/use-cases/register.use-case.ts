@@ -1,6 +1,7 @@
 // src/auth/application/use-cases/register.use-case.ts
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { PinoLogger, InjectPinoLogger } from 'nestjs-pino';
 import { randomBytes, createHash } from 'crypto';
 import { TRANSACTION_MANAGER } from 'src/common/domain/tokens';
 import type { ITransactionManager } from 'src/common/domain/transaction-manager.interface';
@@ -21,14 +22,10 @@ import type { IDoctorRepository } from 'src/doctors/domain/interfaces/doctor.rep
 import { APOTHECARY_REPOSITORY } from 'src/apothecaries/domain/interfaces/tokens';
 import type { IApothecaryRepository } from 'src/apothecaries/domain/interfaces/apothecary.repository.interface';
 
-// PERBAIKAN KUNCI: use case ini SEKARANG TIDAK LAGI mengimpor PrismaService
-// sama sekali. Ia hanya bergantung pada ITransactionManager (abstraksi domain).
-// Kalau besok Anda ganti Prisma ke Drizzle/TypeORM, file ini tidak perlu disentuh.
 @Injectable()
 export class RegisterUseCase {
-  private readonly logger = new Logger(RegisterUseCase.name);
-
   constructor(
+    @InjectPinoLogger(RegisterUseCase.name) private readonly logger: PinoLogger,
     @Inject(TRANSACTION_MANAGER) private readonly transactionManager: ITransactionManager,
     private readonly configService: ConfigService,
     @Inject(USER_REPOSITORY) private readonly userRepository: IUserRepository,
@@ -85,7 +82,9 @@ export class RegisterUseCase {
       return { userId: user.id, status: actorStatus };
     });
 
-    this.logger.log({ message: 'user_registered', userId, role: dto.role, status });
+    // PinoLogger otomatis menyertakan request ID yang sedang aktif — tidak perlu
+    // ambil correlationId manual seperti solusi AppLogger sebelumnya.
+    this.logger.info({ userId, role: dto.role, status }, 'user_registered');
 
     await this.issueVerificationEmailBestEffort(userId, email.toString());
 
