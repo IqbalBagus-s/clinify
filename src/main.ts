@@ -2,17 +2,19 @@
 import 'dotenv/config';
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
+import { Logger } from 'nestjs-pino';
 import { AppModule } from './app.module';
-import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
-import { PrismaExceptionFilter } from './common/filters/prisma-exception.filter';
-import { AppLogger } from './common/logger/app-logger.service';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
-  app.useLogger(new AppLogger());
+
+  app.useLogger(app.get(Logger));
 
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
-  app.useGlobalFilters(new AllExceptionsFilter(), new PrismaExceptionFilter());
+
+  // PERBAIKAN: baris useGlobalFilters() dihapus dari sini — kedua filter
+  // sekarang didaftarkan lewat APP_FILTER di app.module.ts, sehingga
+  // NestJS DI yang membuat instance-nya (bukan `new` manual).
 
   await app.listen(3000);
 }

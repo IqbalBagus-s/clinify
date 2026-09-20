@@ -1,21 +1,26 @@
 // src/auth/infrastructure/email/email-queue.producer.ts
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Scope } from '@nestjs/common';
+import { REQUEST } from '@nestjs/core';
 import { InjectQueue } from '@nestjs/bullmq';
+import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import { Queue } from 'bullmq';
+import { Request } from 'express';
 import { IEmailService } from 'src/auth/domain/interfaces/email.service.interface';
-import { RequestContextService } from 'src/common/context/request-context.service';
 import { EMAIL_QUEUE_NAME, EmailJobName, SendVerificationJobData } from './email-queue.constants';
 
-@Injectable()
+// PERBAIKAN: provider ini sekarang Scope.REQUEST supaya bisa mengakses
+// objek request Express secara langsung, dan membaca req.id yang sudah
+// ditempel oleh pino-http lewat genReqId di LoggerModule.
+@Injectable({ scope: Scope.REQUEST })
 export class EmailQueueProducer implements IEmailService {
-  private readonly logger = new Logger(EmailQueueProducer.name);
-
-  constructor(@InjectQueue(EMAIL_QUEUE_NAME) private readonly emailQueue: Queue) {}
+  constructor(
+    @InjectPinoLogger(EmailQueueProducer.name) private readonly logger: PinoLogger,
+    @InjectQueue(EMAIL_QUEUE_NAME) private readonly emailQueue: Queue,
+    @Inject(REQUEST) private readonly request: Request & { id?: string },
+  ) {}
 
   async sendVerificationEmail(to: string, rawToken: string): Promise<void> {
-    // Correlation ID dari request HTTP yang memicu ini diteruskan ke job,
-    // supaya bisa ditelusuri sampai ke worker BullMQ.
-    const correlationId = RequestContextService.getCorrelationId();
+    const correlationId = this.request?.id;
     try {
       const jobData: SendVerificationJobData = { to, rawToken, correlationId };
       await this.emailQueue.add(EmailJobName.SEND_VERIFICATION, jobData, {
@@ -24,12 +29,9 @@ export class EmailQueueProducer implements IEmailService {
         removeOnComplete: true,
         removeOnFail: 100,
       });
-      this.logger.log({ message: 'verification_email_job_enqueued', to, correlationId });
+      this.logger.info({ to, correlationId }, 'verification_email_job_enqueued');
     } catch (error) {
-      this.logger.error(
-        { message: 'verification_email_job_enqueue_failed', to, correlationId },
-        (error as Error).stack,
-      );
+      this.logger.error({ to, correlationId, err: error }, 'verification_email_job_enqueue_failed');
     }
   }
 }
