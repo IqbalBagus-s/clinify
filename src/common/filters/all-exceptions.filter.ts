@@ -1,18 +1,22 @@
 // src/common/filters/all-exceptions.filter.ts
-import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus, Logger } from '@nestjs/common';
+import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { DomainException } from '../exceptions/domain.exception';
-import { RequestContextService } from '../context/request-context.service';
+import { Logger } from 'nestjs-pino';
 
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
-  private readonly logger = new Logger(AllExceptionsFilter.name);
+  // PERBAIKAN: pakai Logger biasa dari nestjs-pino (sama seperti yang
+  // dipasang di main.ts), bukan PinoLogger dengan context per-kelas —
+  // Logger ini singleton biasa, tidak pakai mekanisme token kontekstual
+  // yang bermasalah saat class-nya didaftarkan lewat APP_FILTER.
+  constructor(private readonly logger: Logger) {}
 
   catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
-    const request = ctx.getRequest<Request>();
-    const correlationId = RequestContextService.getCorrelationId();
+    const request = ctx.getRequest<Request & { id?: string }>();
+    const correlationId = request.id;
 
     let statusCode = HttpStatus.INTERNAL_SERVER_ERROR;
     let errorCode = 'INTERNAL_SERVER_ERROR';
@@ -29,13 +33,12 @@ export class AllExceptionsFilter implements ExceptionFilter {
       message = res?.message?.toString?.() ?? exception.message;
     } else {
       this.logger.error(
-        { message: 'unhandled_exception', path: request.url, correlationId },
+        `unhandled_exception path=${request.url} correlationId=${correlationId}`,
         exception instanceof Error ? exception.stack : String(exception),
+        'AllExceptionsFilter',
       );
     }
 
-    // correlationId disertakan di response supaya kalau user melapor error,
-    // Anda tinggal grep log dengan ID ini — tidak perlu menebak-nebak waktu kejadian.
     response.status(statusCode).json({
       statusCode,
       errorCode,
