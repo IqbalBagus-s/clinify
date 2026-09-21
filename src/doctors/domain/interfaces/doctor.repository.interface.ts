@@ -11,4 +11,5 @@ export interface CreateDoctorInput {
 export interface IDoctorRepository {
   createWithinTransaction(tx: TransactionContext, input: CreateDoctorInput): Promise<DoctorEntity>;
   isSpecializationActive(specializationId: string): Promise<boolean>;
+  findStatusByUserId(userId: string): Promise<'PENDING_VERIFICATION' | 'ACTIVE' | 'INACTIVE' | null>;
 }

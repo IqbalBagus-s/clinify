@@ -28,4 +28,12 @@ export class DoctorRepositoryImpl implements IDoctorRepository {
     const specialization = await this.prisma.specialization.findUnique({ where: { id: specializationId } });
     return specialization !== null && specialization.status === 'ACTIVE';
   }
+
+  async findStatusByUserId(userId: string): Promise<'PENDING_VERIFICATION' | 'ACTIVE' | 'INACTIVE' | null> {
+    const doctor = await this.prisma.doctor.findUnique({
+      where: { userId },
+      select: { status: true },
+    });
+    return doctor?.status ?? null;
+  }
 }
