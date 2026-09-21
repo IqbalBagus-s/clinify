@@ -19,4 +19,8 @@ export interface IUserRepository {
   markEmailVerified(userId: string): Promise<void>;
   findById(id: string): Promise<UserEntity | null>;
   findByEmail(email: string): Promise<UserEntity | null>;
+  findByIdentifier(identifier: string): Promise<UserEntity | null>;
+  recordFailedLogin(userId: string): Promise<number>;
+  recordSuccessfulLogin(userId: string): Promise<void>;
+  lockAccount(userId: string, lockedUntil: Date): Promise<void>;
 }
