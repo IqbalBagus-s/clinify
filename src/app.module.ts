@@ -5,6 +5,7 @@ import { ConfigModule } from '@nestjs/config';
 import { AuthModule } from './auth/auth.module';
 import { BullMqModule } from './queue/bullmq.module';
 import authConfig from './config/auth.config';
+import jwtConfig from './config/jwt.config';
 import { RedisModule } from './redis/redis.module';
 import { HealthModule } from './health/health.module';
 import { LoggerModule } from './common/logger/logger.module';
@@ -15,7 +16,7 @@ import { PrismaExceptionFilter } from './common/filters/prisma-exception.filter'
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [authConfig],
+      load: [authConfig, jwtConfig],
     }),
     LoggerModule,
     BullMqModule,
@@ -24,9 +25,6 @@ import { PrismaExceptionFilter } from './common/filters/prisma-exception.filter'
     HealthModule,
   ],
   providers: [
-    // PERBAIKAN: filter didaftarkan lewat DI container (APP_FILTER),
-    // bukan lewat `new` manual di main.ts. Dengan cara ini, NestJS yang
-    // membuat instance-nya, sehingga @InjectPinoLogger bisa bekerja normal.
     { provide: APP_FILTER, useClass: AllExceptionsFilter },
     { provide: APP_FILTER, useClass: PrismaExceptionFilter },
   ],
