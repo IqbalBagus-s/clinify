@@ -47,4 +47,33 @@ export class UserRepositoryImpl implements IUserRepository {
     const user = await this.prisma.user.findUnique({ where: { email } });
     return user ? UserMapper.toDomain(user) : null;
   }
+
+  async findByIdentifier(identifier: string): Promise<UserEntity | null> {
+    const user = await this.prisma.user.findFirst({
+      where: { OR: [{ username: identifier }, { email: identifier.toLowerCase() }] },
+    });
+    return user ? UserMapper.toDomain(user) : null;
+  }
+
+  async recordFailedLogin(userId: string): Promise<number> {
+    const user = await this.prisma.user.update({
+      where: { id: userId },
+      data: { failedLoginAttempts: { increment: 1 } },
+      select: { failedLoginAttempts: true },
+    });
+    return user.failedLoginAttempts;
+  }
+
+  async recordSuccessfulLogin(userId: string): Promise<void> {
+    // lockedUntil ikut direset — kalau sebelumnya terkunci lalu masa
+    // kuncinya sudah lewat, login berhasil membersihkan sisa status lama.
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { failedLoginAttempts: 0, lastLoginAt: new Date(), lockedUntil: null },
+    });
+  }
+
+  async lockAccount(userId: string, lockedUntil: Date): Promise<void> {
+    await this.prisma.user.update({ where: { id: userId }, data: { lockedUntil } });
+  }
 }

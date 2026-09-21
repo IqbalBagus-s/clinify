@@ -9,6 +9,8 @@ export class UserEntity {
     public readonly passwordHash: string,
     public readonly role: UserRoleValue,
     public emailVerifiedAt: Date | null,
+    public readonly failedLoginAttempts: number,
+    public readonly lockedUntil: Date | null,
     public readonly createdAt: Date,
   ) {}
 }

@@ -4,6 +4,16 @@ import { UserEntity } from 'src/users/domain/entities/user.entity';
 
 export class UserMapper {
   static toDomain(raw: PrismaUser): UserEntity {
-    return new UserEntity(raw.id, raw.username, raw.email, raw.passwordHash, raw.role, raw.emailVerifiedAt, raw.createdAt);
+    return new UserEntity(
+      raw.id,
+      raw.username,
+      raw.email,
+      raw.passwordHash,
+      raw.role,
+      raw.emailVerifiedAt,
+      raw.failedLoginAttempts,
+      raw.lockedUntil,
+      raw.createdAt,
+    );
   }
 }
