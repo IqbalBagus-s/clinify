@@ -1,5 +1,6 @@
 // src/patients/infrastructure/persistence/repositories/patient.repository.impl.ts
 import { Inject, Injectable } from '@nestjs/common';
+import { PrismaService } from 'src/prisma/prisma.service';
 import { TransactionContext } from 'src/common/domain/transaction-context';
 import { PrismaTransactionClient } from 'src/prisma/prisma.types';
 import { IPatientRepository } from 'src/patients/domain/interfaces/patient.repository.interface';
@@ -11,6 +12,7 @@ import { PatientMapper } from '../mappers/patient.mapper';
 @Injectable()
 export class PatientRepositoryImpl implements IPatientRepository {
   constructor(
+    private readonly prisma: PrismaService,
     @Inject(MEDICAL_RECORD_NUMBER_GENERATOR)
     private readonly mrnGenerator: IMedicalRecordNumberGenerator,
   ) {}
@@ -26,5 +28,13 @@ export class PatientRepositoryImpl implements IPatientRepository {
       },
     });
     return PatientMapper.toDomain(patient);
+  }
+
+  async findStatusByUserId(userId: string): Promise<'ACTIVE' | 'INACTIVE' | null> {
+    const patient = await this.prisma.patient.findUnique({
+      where: { userId },
+      select: { status: true },
+    });
+    return patient?.status ?? null;
   }
 }
