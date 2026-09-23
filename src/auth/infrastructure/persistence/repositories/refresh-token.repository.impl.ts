@@ -39,15 +39,27 @@ export class RefreshTokenRepositoryImpl implements IRefreshTokenRepository {
     await this.prisma.refreshToken.update({ where: { id }, data: { revokedAt: new Date() } });
   }
 
-  async revokeAllForUser(userId: string, exceptId?: string): Promise<number> {
-    const result = await this.prisma.refreshToken.updateMany({
+  async revokeAllForUser(userId: string, exceptId?: string): Promise<string[]> {
+    // Dua langkah (query dulu, baru updateMany) karena Prisma updateMany
+    // tidak mengembalikan baris yang terdampak — padahal kita perlu daftar
+    // ID-nya untuk dimasukkan ke blacklist Redis di use case pemanggil.
+    const toRevoke = await this.prisma.refreshToken.findMany({
       where: {
         userId,
         revokedAt: null,
         ...(exceptId ? { id: { not: exceptId } } : {}),
       },
+      select: { id: true },
+    });
+
+    const ids = toRevoke.map((t) => t.id);
+    if (ids.length === 0) return [];
+
+    await this.prisma.refreshToken.updateMany({
+      where: { id: { in: ids } },
       data: { revokedAt: new Date() },
     });
-    return result.count;
+
+    return ids;
   }
 }
