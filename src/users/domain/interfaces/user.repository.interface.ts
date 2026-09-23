@@ -23,4 +23,5 @@ export interface IUserRepository {
   recordFailedLogin(userId: string): Promise<number>;
   recordSuccessfulLogin(userId: string): Promise<void>;
   lockAccount(userId: string, lockedUntil: Date): Promise<void>;
+  updatePasswordHash(userId: string, passwordHash: string): Promise<void>;
 }

@@ -16,20 +16,22 @@ export class RateLimitGuard implements CanActivate {
     const routeKey = `rate-limit:${request.route?.path}:${request.ip}`;
     const client = this.redisService.getClient();
 
-    const currentCount = await client.incr(routeKey);
-    if (currentCount === 1) {
-      await client.expire(routeKey, this.windowSeconds);
+    let currentCount: number;
+    try {
+      currentCount = await client.incr(routeKey);
+      if (currentCount === 1) {
+        await client.expire(routeKey, this.windowSeconds);
+      }
+    } catch (error) {
+      // FAIL-OPEN, konsisten dengan TokenBlacklistImpl: kalau Redis tidak
+      // terjangkau, rate limiting dilewati sementara — endpoint tetap
+      // berfungsi, hanya kehilangan proteksi brute-force selama Redis down.
+      this.logger.error('Redis tidak terjangkau saat cek rate limit — fail-open, request diloloskan', error);
+      return true;
     }
 
     if (currentCount > this.limit) {
-      // Sebelumnya percobaan brute-force tidak meninggalkan jejak log sama
-      // sekali — hanya terlihat sebagai counter di Redis yang harus dicek manual.
-      this.logger.warn({
-        message: 'rate_limit_exceeded',
-        route: request.route?.path,
-        ip: request.ip,
-        currentCount,
-      });
+      this.logger.warn({ message: 'rate_limit_exceeded', route: request.route?.path, ip: request.ip, currentCount });
       throw new HttpException(
         { statusCode: HttpStatus.TOO_MANY_REQUESTS, errorCode: 'RATE_LIMIT_EXCEEDED', message: 'Terlalu banyak percobaan. Silakan coba lagi nanti.' },
         HttpStatus.TOO_MANY_REQUESTS,

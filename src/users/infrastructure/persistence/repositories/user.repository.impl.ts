@@ -65,8 +65,6 @@ export class UserRepositoryImpl implements IUserRepository {
   }
 
   async recordSuccessfulLogin(userId: string): Promise<void> {
-    // lockedUntil ikut direset — kalau sebelumnya terkunci lalu masa
-    // kuncinya sudah lewat, login berhasil membersihkan sisa status lama.
     await this.prisma.user.update({
       where: { id: userId },
       data: { failedLoginAttempts: 0, lastLoginAt: new Date(), lockedUntil: null },
@@ -75,5 +73,9 @@ export class UserRepositoryImpl implements IUserRepository {
 
   async lockAccount(userId: string, lockedUntil: Date): Promise<void> {
     await this.prisma.user.update({ where: { id: userId }, data: { lockedUntil } });
+  }
+
+  async updatePasswordHash(userId: string, passwordHash: string): Promise<void> {
+    await this.prisma.user.update({ where: { id: userId }, data: { passwordHash } });
   }
 }
