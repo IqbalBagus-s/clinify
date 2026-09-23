@@ -3,7 +3,13 @@ import { OnWorkerEvent, Processor, WorkerHost } from '@nestjs/bullmq';
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import { Job } from 'bullmq';
 import { EmailServiceImpl } from './email.service.impl';
-import { EMAIL_QUEUE_NAME, EmailJobName, SendVerificationJobData } from './email-queue.constants';
+import {
+  EMAIL_QUEUE_NAME,
+  EmailJobData,
+  EmailJobName,
+  SendPasswordResetJobData,
+  SendVerificationJobData,
+} from './email-queue.constants';
 
 @Processor(EMAIL_QUEUE_NAME)
 export class EmailProcessor extends WorkerHost {
@@ -14,26 +20,33 @@ export class EmailProcessor extends WorkerHost {
     super();
   }
 
-  async process(job: Job<SendVerificationJobData>): Promise<void> {
-    // Karena job ini di luar konteks HTTP, correlationId TIDAK otomatis
-    // muncul di log seperti request biasa — harus disertakan manual di sini.
+  async process(job: Job<EmailJobData>): Promise<void> {
     const logContext = { jobId: job.id, correlationId: job.data.correlationId, to: job.data.to };
 
     switch (job.name) {
-      case EmailJobName.SEND_VERIFICATION:
+      case EmailJobName.SEND_VERIFICATION: {
+        const data = job.data as SendVerificationJobData;
         this.logger.info(logContext, 'processing_verification_email');
-        await this.emailServiceImpl.sendVerificationEmail(job.data.to, job.data.rawToken);
+        await this.emailServiceImpl.sendVerificationEmail(data.to, data.rawToken);
         break;
+      }
+      case EmailJobName.SEND_PASSWORD_RESET: {
+        const data = job.data as SendPasswordResetJobData;
+        this.logger.info(logContext, 'processing_password_reset_email');
+        await this.emailServiceImpl.sendPasswordResetEmail(data.to, data.rawToken);
+        break;
+      }
       default:
         this.logger.warn({ jobName: job.name }, 'unknown_job_name');
     }
   }
 
   @OnWorkerEvent('failed')
-  onFailed(job: Job<SendVerificationJobData> | undefined, error: Error) {
+  onFailed(job: Job<EmailJobData> | undefined, error: Error) {
     this.logger.error(
       {
         jobId: job?.id,
+        jobName: job?.name,
         to: job?.data?.to,
         correlationId: job?.data?.correlationId,
         attemptsMade: job?.attemptsMade,
@@ -43,9 +56,9 @@ export class EmailProcessor extends WorkerHost {
   }
 
   @OnWorkerEvent('completed')
-  onCompleted(job: Job<SendVerificationJobData>) {
+  onCompleted(job: Job<EmailJobData>) {
     this.logger.info(
-      { jobId: job.id, to: job.data.to, correlationId: job.data.correlationId },
+      { jobId: job.id, jobName: job.name, to: job.data.to, correlationId: job.data.correlationId },
       'email_job_completed',
     );
   }
