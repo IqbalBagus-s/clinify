@@ -4,6 +4,11 @@ import { PatientEntity } from 'src/patients/domain/entities/patient.entity';
 
 export class PatientMapper {
   static toDomain(raw: PrismaPatient): PatientEntity {
-    return new PatientEntity(raw.userId, raw.medicalRecordNumber, raw.status, raw.registeredAt);
+    return new PatientEntity(
+      raw.userId,
+      raw.medicalRecordNumber,
+      raw.status,
+      raw.registeredAt,
+    );
   }
 }

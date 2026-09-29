@@ -23,7 +23,8 @@ const JOB_OPTIONS = {
 @Injectable({ scope: Scope.REQUEST })
 export class EmailQueueProducer implements IEmailService {
   constructor(
-    @InjectPinoLogger(EmailQueueProducer.name) private readonly logger: PinoLogger,
+    @InjectPinoLogger(EmailQueueProducer.name)
+    private readonly logger: PinoLogger,
     @InjectQueue(EMAIL_QUEUE_NAME) private readonly emailQueue: Queue,
     @Inject(REQUEST) private readonly request: Request & { id?: string },
   ) {}
@@ -32,10 +33,20 @@ export class EmailQueueProducer implements IEmailService {
     const correlationId = this.request?.id;
     try {
       const jobData: SendVerificationJobData = { to, rawToken, correlationId };
-      await this.emailQueue.add(EmailJobName.SEND_VERIFICATION, jobData, JOB_OPTIONS);
-      this.logger.info({ to, correlationId }, 'verification_email_job_enqueued');
+      await this.emailQueue.add(
+        EmailJobName.SEND_VERIFICATION,
+        jobData,
+        JOB_OPTIONS,
+      );
+      this.logger.info(
+        { to, correlationId },
+        'verification_email_job_enqueued',
+      );
     } catch (error) {
-      this.logger.error({ to, correlationId, err: error }, 'verification_email_job_enqueue_failed');
+      this.logger.error(
+        { to, correlationId, err: error },
+        'verification_email_job_enqueue_failed',
+      );
     }
   }
 
@@ -43,10 +54,20 @@ export class EmailQueueProducer implements IEmailService {
     const correlationId = this.request?.id;
     try {
       const jobData: SendPasswordResetJobData = { to, rawToken, correlationId };
-      await this.emailQueue.add(EmailJobName.SEND_PASSWORD_RESET, jobData, JOB_OPTIONS);
-      this.logger.info({ to, correlationId }, 'password_reset_email_job_enqueued');
+      await this.emailQueue.add(
+        EmailJobName.SEND_PASSWORD_RESET,
+        jobData,
+        JOB_OPTIONS,
+      );
+      this.logger.info(
+        { to, correlationId },
+        'password_reset_email_job_enqueued',
+      );
     } catch (error) {
-      this.logger.error({ to, correlationId, err: error }, 'password_reset_email_job_enqueue_failed');
+      this.logger.error(
+        { to, correlationId, err: error },
+        'password_reset_email_job_enqueue_failed',
+      );
     }
   }
 }

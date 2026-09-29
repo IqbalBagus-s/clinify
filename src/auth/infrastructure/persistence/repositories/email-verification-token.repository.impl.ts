@@ -9,19 +9,30 @@ import { EmailVerificationTokenMapper } from '../mappers/email-verification-toke
 export class EmailVerificationTokenRepositoryImpl implements IEmailVerificationTokenRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(userId: string, tokenHash: string, expiresAt: Date): Promise<EmailVerificationTokenEntity> {
+  async create(
+    userId: string,
+    tokenHash: string,
+    expiresAt: Date,
+  ): Promise<EmailVerificationTokenEntity> {
     const token = await this.prisma.emailVerificationToken.create({
       data: { userId: userId, tokenHash: tokenHash, expiresAt: expiresAt },
     });
     return EmailVerificationTokenMapper.toDomain(token);
   }
 
-  async findByTokenHash(tokenHash: string): Promise<EmailVerificationTokenEntity | null> {
-    const token = await this.prisma.emailVerificationToken.findFirst({ where: { tokenHash: tokenHash } });
+  async findByTokenHash(
+    tokenHash: string,
+  ): Promise<EmailVerificationTokenEntity | null> {
+    const token = await this.prisma.emailVerificationToken.findFirst({
+      where: { tokenHash: tokenHash },
+    });
     return token ? EmailVerificationTokenMapper.toDomain(token) : null;
   }
 
   async markAsUsed(id: string): Promise<void> {
-    await this.prisma.emailVerificationToken.update({ where: { id }, data: { usedAt: new Date() } });
+    await this.prisma.emailVerificationToken.update({
+      where: { id },
+      data: { usedAt: new Date() },
+    });
   }
 }

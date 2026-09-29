@@ -7,12 +7,18 @@ export class AccountLockoutPolicy {
   constructor(private readonly configService: ConfigService) {}
 
   shouldLock(failedAttempts: number): boolean {
-    const maxFailedAttempts = this.configService.get<number>('auth.maxFailedAttempts', 5);
+    const maxFailedAttempts = this.configService.get<number>(
+      'auth.maxFailedAttempts',
+      5,
+    );
     return failedAttempts >= maxFailedAttempts;
   }
 
   computeLockedUntil(): Date {
-    const lockDurationMinutes = this.configService.get<number>('auth.lockDurationMinutes', 15);
+    const lockDurationMinutes = this.configService.get<number>(
+      'auth.lockDurationMinutes',
+      15,
+    );
     return new Date(Date.now() + lockDurationMinutes * 60 * 1000);
   }
 

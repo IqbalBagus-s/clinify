@@ -15,7 +15,9 @@ export class TokenBlacklistImpl implements ITokenBlacklist {
 
   async add(sessionId: string, ttlSeconds: number): Promise<void> {
     try {
-      await this.redisService.getClient().set(this.key(sessionId), '1', 'EX', ttlSeconds);
+      await this.redisService
+        .getClient()
+        .set(this.key(sessionId), '1', 'EX', ttlSeconds);
     } catch (error) {
       // Fail-open juga di sisi penulisan: kalau Redis tidak bisa diakses saat
       // logout/revoke, proses utama (revoke di database) TETAP berhasil —
@@ -23,13 +25,18 @@ export class TokenBlacklistImpl implements ITokenBlacklist {
       // logout itu sendiri. Konsekuensi: window kerentanan (access token
       // lama masih sah) tetap terbuka sampai Redis pulih — trade-off sadar
       // sesuai keputusan fail-open.
-      this.logger.error(`Gagal menambahkan session ${sessionId} ke blacklist (Redis error)`, error);
+      this.logger.error(
+        `Gagal menambahkan session ${sessionId} ke blacklist (Redis error)`,
+        error,
+      );
     }
   }
 
   async isBlacklisted(sessionId: string): Promise<boolean> {
     try {
-      const exists = await this.redisService.getClient().exists(this.key(sessionId));
+      const exists = await this.redisService
+        .getClient()
+        .exists(this.key(sessionId));
       return exists === 1;
     } catch (error) {
       // FAIL-OPEN: kalau Redis tidak terjangkau, anggap TIDAK diblacklist —

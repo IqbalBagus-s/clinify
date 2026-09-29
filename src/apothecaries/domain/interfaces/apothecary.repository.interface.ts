@@ -8,6 +8,11 @@ export interface CreateApothecaryInput {
 }
 
 export interface IApothecaryRepository {
-  createWithinTransaction(tx: TransactionContext, input: CreateApothecaryInput): Promise<ApothecaryEntity>;
-  findStatusByUserId(userId: string): Promise<'PENDING_VERIFICATION' | 'ACTIVE' | 'INACTIVE' | null>;
+  createWithinTransaction(
+    tx: TransactionContext,
+    input: CreateApothecaryInput,
+  ): Promise<ApothecaryEntity>;
+  findStatusByUserId(
+    userId: string,
+  ): Promise<'PENDING_VERIFICATION' | 'ACTIVE' | 'INACTIVE' | null>;
 }

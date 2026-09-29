@@ -15,7 +15,10 @@ export interface CreateUserInput {
 }
 
 export interface IUserRepository {
-  createWithinTransaction(tx: TransactionContext, input: CreateUserInput): Promise<UserEntity>;
+  createWithinTransaction(
+    tx: TransactionContext,
+    input: CreateUserInput,
+  ): Promise<UserEntity>;
   markEmailVerified(userId: string): Promise<void>;
   findById(id: string): Promise<UserEntity | null>;
   findByEmail(email: string): Promise<UserEntity | null>;

@@ -4,6 +4,13 @@ import { PasswordResetTokenEntity } from 'src/auth/domain/entities/password-rese
 
 export class PasswordResetTokenMapper {
   static toDomain(raw: PrismaToken): PasswordResetTokenEntity {
-    return new PasswordResetTokenEntity(raw.id, raw.userId, raw.tokenHash, raw.expiresAt, raw.usedAt, raw.createdAt);
+    return new PasswordResetTokenEntity(
+      raw.id,
+      raw.userId,
+      raw.tokenHash,
+      raw.expiresAt,
+      raw.usedAt,
+      raw.createdAt,
+    );
   }
 }

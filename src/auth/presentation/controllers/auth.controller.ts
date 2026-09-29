@@ -1,5 +1,14 @@
 // src/auth/presentation/controllers/auth.controller.ts
-import { Body, Controller, HttpCode, HttpStatus, Post, Req, Res, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  HttpCode,
+  HttpStatus,
+  Post,
+  Req,
+  Res,
+  UseGuards,
+} from '@nestjs/common';
 import type { Request, Response } from 'express';
 import { RegisterDto } from '../dto/register.dto';
 import { VerifyEmailDto } from '../dto/verify-email.dto';
@@ -47,7 +56,10 @@ export class AuthController {
   @HttpCode(HttpStatus.CREATED)
   async register(@Body() dto: RegisterDto) {
     const result = await this.registerUseCase.execute(dto);
-    return { ...result, message: 'Registrasi berhasil. Silakan cek email untuk verifikasi.' };
+    return {
+      ...result,
+      message: 'Registrasi berhasil. Silakan cek email untuk verifikasi.',
+    };
   }
 
   @Post('verify-email')
@@ -62,19 +74,30 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   async resendVerification(@Body() dto: ResendVerificationDto) {
     await this.resendVerificationEmailUseCase.execute(dto.email);
-    return { message: 'Jika email terdaftar dan belum terverifikasi, tautan verifikasi baru telah dikirim.' };
+    return {
+      message:
+        'Jika email terdaftar dan belum terverifikasi, tautan verifikasi baru telah dikirim.',
+    };
   }
 
   @Post('login')
   @UseGuards(RateLimitGuard)
   @HttpCode(HttpStatus.OK)
-  async login(@Body() dto: LoginDto, @Req() request: Request, @Res({ passthrough: true }) response: Response) {
+  async login(
+    @Body() dto: LoginDto,
+    @Req() request: Request,
+    @Res({ passthrough: true }) response: Response,
+  ) {
     const result = await this.loginUseCase.execute(dto, {
       deviceInfo: this.extractUserAgent(request),
       ipAddress: request.ip,
     });
 
-    this.setRefreshTokenCookie(response, result.refreshToken, result.refreshTokenExpiresAt);
+    this.setRefreshTokenCookie(
+      response,
+      result.refreshToken,
+      result.refreshTokenExpiresAt,
+    );
 
     return {
       access_token: result.accessToken,
@@ -85,7 +108,10 @@ export class AuthController {
 
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
-  async refresh(@Req() request: Request, @Res({ passthrough: true }) response: Response) {
+  async refresh(
+    @Req() request: Request,
+    @Res({ passthrough: true }) response: Response,
+  ) {
     const rawRefreshToken = request.cookies?.[REFRESH_TOKEN_COOKIE_NAME];
     if (!rawRefreshToken) {
       throw new RefreshTokenInvalidException();
@@ -96,7 +122,11 @@ export class AuthController {
       ipAddress: request.ip,
     });
 
-    this.setRefreshTokenCookie(response, result.refreshToken, result.refreshTokenExpiresAt);
+    this.setRefreshTokenCookie(
+      response,
+      result.refreshToken,
+      result.refreshTokenExpiresAt,
+    );
 
     return {
       access_token: result.accessToken,
@@ -107,7 +137,10 @@ export class AuthController {
   @Post('logout')
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
-  async logout(@CurrentUser() user: AccessTokenPayload, @Res({ passthrough: true }) response: Response) {
+  async logout(
+    @CurrentUser() user: AccessTokenPayload,
+    @Res({ passthrough: true }) response: Response,
+  ) {
     await this.logoutUseCase.execute(user.sid);
     this.clearRefreshTokenCookie(response);
     return { message: 'Logout berhasil.' };
@@ -116,8 +149,13 @@ export class AuthController {
   @Post('logout-all-devices')
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
-  async logoutAllDevices(@CurrentUser() user: AccessTokenPayload, @Res({ passthrough: true }) response: Response) {
-    const revokedSessions = await this.logoutAllDevicesUseCase.execute(user.sub);
+  async logoutAllDevices(
+    @CurrentUser() user: AccessTokenPayload,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    const revokedSessions = await this.logoutAllDevicesUseCase.execute(
+      user.sub,
+    );
     this.clearRefreshTokenCookie(response);
     return {
       message: 'Berhasil logout dari semua perangkat.',
@@ -131,7 +169,10 @@ export class AuthController {
   async forgotPassword(@Body() dto: ForgotPasswordDto) {
     await this.forgotPasswordUseCase.execute(dto.email);
     // Pesan identik terlepas kondisi internal — lihat forgot-password.use-case.ts
-    return { message: 'Jika email terdaftar, instruksi lebih lanjut telah dikirim ke email Anda.' };
+    return {
+      message:
+        'Jika email terdaftar, instruksi lebih lanjut telah dikirim ke email Anda.',
+    };
   }
 
   @Post('reset-password')
@@ -139,15 +180,28 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   async resetPassword(@Body() dto: ResetPasswordDto) {
     await this.resetPasswordUseCase.execute(dto.token, dto.new_password);
-    return { message: 'Password berhasil direset. Semua sesi aktif telah diakhiri — silakan login kembali.' };
+    return {
+      message:
+        'Password berhasil direset. Semua sesi aktif telah diakhiri — silakan login kembali.',
+    };
   }
 
   @Post('change-password')
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
-  async changePassword(@CurrentUser() user: AccessTokenPayload, @Body() dto: ChangePasswordDto) {
-    await this.changePasswordUseCase.execute(user.sub, user.sid, dto.old_password, dto.new_password);
-    return { message: 'Password berhasil diubah. Semua sesi lain telah diakhiri.' };
+  async changePassword(
+    @CurrentUser() user: AccessTokenPayload,
+    @Body() dto: ChangePasswordDto,
+  ) {
+    await this.changePasswordUseCase.execute(
+      user.sub,
+      user.sid,
+      dto.old_password,
+      dto.new_password,
+    );
+    return {
+      message: 'Password berhasil diubah. Semua sesi lain telah diakhiri.',
+    };
   }
 
   private extractUserAgent(request: Request): string | undefined {
@@ -155,7 +209,11 @@ export class AuthController {
     return Array.isArray(header) ? header[0] : header;
   }
 
-  private setRefreshTokenCookie(response: Response, token: string, expiresAt: Date) {
+  private setRefreshTokenCookie(
+    response: Response,
+    token: string,
+    expiresAt: Date,
+  ) {
     response.cookie(REFRESH_TOKEN_COOKIE_NAME, token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',

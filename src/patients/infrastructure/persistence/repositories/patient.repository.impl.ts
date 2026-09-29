@@ -17,7 +17,10 @@ export class PatientRepositoryImpl implements IPatientRepository {
     private readonly mrnGenerator: IMedicalRecordNumberGenerator,
   ) {}
 
-  async createWithinTransaction(tx: TransactionContext, userId: string): Promise<PatientEntity> {
+  async createWithinTransaction(
+    tx: TransactionContext,
+    userId: string,
+  ): Promise<PatientEntity> {
     const client = tx as PrismaTransactionClient;
     const patient = await client.patient.create({
       data: {
@@ -30,7 +33,9 @@ export class PatientRepositoryImpl implements IPatientRepository {
     return PatientMapper.toDomain(patient);
   }
 
-  async findStatusByUserId(userId: string): Promise<'ACTIVE' | 'INACTIVE' | null> {
+  async findStatusByUserId(
+    userId: string,
+  ): Promise<'ACTIVE' | 'INACTIVE' | null> {
     const patient = await this.prisma.patient.findUnique({
       where: { userId },
       select: { status: true },

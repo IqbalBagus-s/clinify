@@ -1,5 +1,12 @@
 // src/auth/presentation/guards/rate-limit.guard.ts
-import { CanActivate, ExecutionContext, HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
+import {
+  CanActivate,
+  ExecutionContext,
+  HttpException,
+  HttpStatus,
+  Injectable,
+  Logger,
+} from '@nestjs/common';
 import { Request } from 'express';
 import { RedisService } from 'src/redis/redis.service';
 
@@ -26,14 +33,26 @@ export class RateLimitGuard implements CanActivate {
       // FAIL-OPEN, konsisten dengan TokenBlacklistImpl: kalau Redis tidak
       // terjangkau, rate limiting dilewati sementara — endpoint tetap
       // berfungsi, hanya kehilangan proteksi brute-force selama Redis down.
-      this.logger.error('Redis tidak terjangkau saat cek rate limit — fail-open, request diloloskan', error);
+      this.logger.error(
+        'Redis tidak terjangkau saat cek rate limit — fail-open, request diloloskan',
+        error,
+      );
       return true;
     }
 
     if (currentCount > this.limit) {
-      this.logger.warn({ message: 'rate_limit_exceeded', route: request.route?.path, ip: request.ip, currentCount });
+      this.logger.warn({
+        message: 'rate_limit_exceeded',
+        route: request.route?.path,
+        ip: request.ip,
+        currentCount,
+      });
       throw new HttpException(
-        { statusCode: HttpStatus.TOO_MANY_REQUESTS, errorCode: 'RATE_LIMIT_EXCEEDED', message: 'Terlalu banyak percobaan. Silakan coba lagi nanti.' },
+        {
+          statusCode: HttpStatus.TOO_MANY_REQUESTS,
+          errorCode: 'RATE_LIMIT_EXCEEDED',
+          message: 'Terlalu banyak percobaan. Silakan coba lagi nanti.',
+        },
         HttpStatus.TOO_MANY_REQUESTS,
       );
     }

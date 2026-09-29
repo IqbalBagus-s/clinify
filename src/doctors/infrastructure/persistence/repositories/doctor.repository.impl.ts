@@ -3,7 +3,10 @@ import { Injectable } from '@nestjs/common';
 import { TransactionContext } from 'src/common/domain/transaction-context';
 import { PrismaTransactionClient } from 'src/prisma/prisma.types';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { CreateDoctorInput, IDoctorRepository } from 'src/doctors/domain/interfaces/doctor.repository.interface';
+import {
+  CreateDoctorInput,
+  IDoctorRepository,
+} from 'src/doctors/domain/interfaces/doctor.repository.interface';
 import { DoctorEntity } from 'src/doctors/domain/entities/doctor.entity';
 import { DoctorMapper } from '../mappers/doctor.mapper';
 
@@ -11,7 +14,10 @@ import { DoctorMapper } from '../mappers/doctor.mapper';
 export class DoctorRepositoryImpl implements IDoctorRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async createWithinTransaction(tx: TransactionContext, input: CreateDoctorInput): Promise<DoctorEntity> {
+  async createWithinTransaction(
+    tx: TransactionContext,
+    input: CreateDoctorInput,
+  ): Promise<DoctorEntity> {
     const client = tx as PrismaTransactionClient;
     const doctor = await client.doctor.create({
       data: {
@@ -25,11 +31,15 @@ export class DoctorRepositoryImpl implements IDoctorRepository {
   }
 
   async isSpecializationActive(specializationId: string): Promise<boolean> {
-    const specialization = await this.prisma.specialization.findUnique({ where: { id: specializationId } });
+    const specialization = await this.prisma.specialization.findUnique({
+      where: { id: specializationId },
+    });
     return specialization !== null && specialization.status === 'ACTIVE';
   }
 
-  async findStatusByUserId(userId: string): Promise<'PENDING_VERIFICATION' | 'ACTIVE' | 'INACTIVE' | null> {
+  async findStatusByUserId(
+    userId: string,
+  ): Promise<'PENDING_VERIFICATION' | 'ACTIVE' | 'INACTIVE' | null> {
     const doctor = await this.prisma.doctor.findUnique({
       where: { userId },
       select: { status: true },

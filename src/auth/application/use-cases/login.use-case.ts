@@ -10,7 +10,11 @@ import { AccountDeactivatedException } from '../../domain/exceptions/account-dea
 import { EmailNotVerifiedException } from '../../domain/exceptions/email-not-verified.exception';
 import { AccountPendingVerificationException } from '../../domain/exceptions/account-pending-verification.exception';
 import { AccountLockoutPolicy } from '../../domain/policies/account-lockout.policy';
-import { PASSWORD_HASHER, TOKEN_SERVICE, REFRESH_TOKEN_REPOSITORY } from '../../domain/interfaces/tokens';
+import {
+  PASSWORD_HASHER,
+  TOKEN_SERVICE,
+  REFRESH_TOKEN_REPOSITORY,
+} from '../../domain/interfaces/tokens';
 import type { IPasswordHasher } from '../../domain/interfaces/password-hasher.interface';
 import type { ITokenService } from '../../domain/interfaces/token.service.interface';
 import type { IRefreshTokenRepository } from '../../domain/interfaces/refresh-token.repository.interface';
@@ -48,12 +52,16 @@ export class LoginUseCase {
     private readonly configService: ConfigService,
     private readonly lockoutPolicy: AccountLockoutPolicy,
     @Inject(USER_REPOSITORY) private readonly userRepository: IUserRepository,
-    @Inject(PATIENT_REPOSITORY) private readonly patientRepository: IPatientRepository,
-    @Inject(DOCTOR_REPOSITORY) private readonly doctorRepository: IDoctorRepository,
-    @Inject(APOTHECARY_REPOSITORY) private readonly apothecaryRepository: IApothecaryRepository,
+    @Inject(PATIENT_REPOSITORY)
+    private readonly patientRepository: IPatientRepository,
+    @Inject(DOCTOR_REPOSITORY)
+    private readonly doctorRepository: IDoctorRepository,
+    @Inject(APOTHECARY_REPOSITORY)
+    private readonly apothecaryRepository: IApothecaryRepository,
     @Inject(PASSWORD_HASHER) private readonly passwordHasher: IPasswordHasher,
     @Inject(TOKEN_SERVICE) private readonly tokenService: ITokenService,
-    @Inject(REFRESH_TOKEN_REPOSITORY) private readonly refreshTokenRepository: IRefreshTokenRepository,
+    @Inject(REFRESH_TOKEN_REPOSITORY)
+    private readonly refreshTokenRepository: IRefreshTokenRepository,
   ) {}
 
   async execute(dto: LoginDto, metadata: LoginMetadata): Promise<LoginResult> {
@@ -68,9 +76,14 @@ export class LoginUseCase {
       throw new InvalidCredentialsException();
     }
 
-    const passwordMatches = await this.passwordHasher.compare(dto.password, user.passwordHash);
+    const passwordMatches = await this.passwordHasher.compare(
+      dto.password,
+      user.passwordHash,
+    );
     if (!passwordMatches) {
-      const newFailedAttempts = await this.userRepository.recordFailedLogin(user.id);
+      const newFailedAttempts = await this.userRepository.recordFailedLogin(
+        user.id,
+      );
       if (this.lockoutPolicy.shouldLock(newFailedAttempts)) {
         const lockedUntil = this.lockoutPolicy.computeLockedUntil();
         await this.userRepository.lockAccount(user.id, lockedUntil);
@@ -105,18 +118,25 @@ export class LoginUseCase {
       throw new EmailNotVerifiedException();
     }
 
-    if ((user.role === 'DOCTOR' || user.role === 'APOTHECARY') && actorStatus === 'PENDING_VERIFICATION') {
+    if (
+      (user.role === 'DOCTOR' || user.role === 'APOTHECARY') &&
+      actorStatus === 'PENDING_VERIFICATION'
+    ) {
       throw new AccountPendingVerificationException();
     }
 
     await this.userRepository.recordSuccessfulLogin(user.id);
 
     const rawRefreshToken = randomBytes(40).toString('hex');
-    const refreshTokenHash = createHash('sha256').update(rawRefreshToken).digest('hex');
+    const refreshTokenHash = createHash('sha256')
+      .update(rawRefreshToken)
+      .digest('hex');
     const refreshTokenTtlDays = dto.remember_me
       ? this.configService.get<number>('jwt.refreshTokenTtlDaysRememberMe', 30)
       : this.configService.get<number>('jwt.refreshTokenTtlDays', 7);
-    const refreshTokenExpiresAt = new Date(Date.now() + refreshTokenTtlDays * 24 * 60 * 60 * 1000);
+    const refreshTokenExpiresAt = new Date(
+      Date.now() + refreshTokenTtlDays * 24 * 60 * 60 * 1000,
+    );
 
     const refreshTokenEntity = await this.refreshTokenRepository.create({
       userId: user.id,
@@ -136,7 +156,10 @@ export class LoginUseCase {
 
     return {
       accessToken,
-      expiresIn: this.configService.get<number>('jwt.accessTokenTtlSeconds', 900),
+      expiresIn: this.configService.get<number>(
+        'jwt.accessTokenTtlSeconds',
+        900,
+      ),
       refreshToken: rawRefreshToken,
       refreshTokenExpiresAt,
       user: {
@@ -148,7 +171,10 @@ export class LoginUseCase {
     };
   }
 
-  private async getActorStatus(userId: string, role: string): Promise<string | null> {
+  private async getActorStatus(
+    userId: string,
+    role: string,
+  ): Promise<string | null> {
     switch (role) {
       case 'PATIENT':
         return this.patientRepository.findStatusByUserId(userId);

@@ -66,9 +66,15 @@ import { AccountLockoutPolicy } from './domain/policies/account-lockout.policy';
     AccountLockoutPolicy,
     RateLimitGuard,
     JwtAuthGuard,
-    { provide: EMAIL_VERIFICATION_TOKEN_REPOSITORY, useClass: EmailVerificationTokenRepositoryImpl },
+    {
+      provide: EMAIL_VERIFICATION_TOKEN_REPOSITORY,
+      useClass: EmailVerificationTokenRepositoryImpl,
+    },
     { provide: REFRESH_TOKEN_REPOSITORY, useClass: RefreshTokenRepositoryImpl },
-    { provide: PASSWORD_RESET_TOKEN_REPOSITORY, useClass: PasswordResetTokenRepositoryImpl },
+    {
+      provide: PASSWORD_RESET_TOKEN_REPOSITORY,
+      useClass: PasswordResetTokenRepositoryImpl,
+    },
     { provide: PASSWORD_HASHER, useClass: PasswordHasherService },
     { provide: TOKEN_SERVICE, useClass: JwtTokenService },
     { provide: TOKEN_BLACKLIST, useClass: TokenBlacklistImpl },

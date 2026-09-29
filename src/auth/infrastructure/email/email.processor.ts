@@ -21,19 +21,29 @@ export class EmailProcessor extends WorkerHost {
   }
 
   async process(job: Job<EmailJobData>): Promise<void> {
-    const logContext = { jobId: job.id, correlationId: job.data.correlationId, to: job.data.to };
+    const logContext = {
+      jobId: job.id,
+      correlationId: job.data.correlationId,
+      to: job.data.to,
+    };
 
     switch (job.name) {
       case EmailJobName.SEND_VERIFICATION: {
         const data = job.data as SendVerificationJobData;
         this.logger.info(logContext, 'processing_verification_email');
-        await this.emailServiceImpl.sendVerificationEmail(data.to, data.rawToken);
+        await this.emailServiceImpl.sendVerificationEmail(
+          data.to,
+          data.rawToken,
+        );
         break;
       }
       case EmailJobName.SEND_PASSWORD_RESET: {
         const data = job.data as SendPasswordResetJobData;
         this.logger.info(logContext, 'processing_password_reset_email');
-        await this.emailServiceImpl.sendPasswordResetEmail(data.to, data.rawToken);
+        await this.emailServiceImpl.sendPasswordResetEmail(
+          data.to,
+          data.rawToken,
+        );
         break;
       }
       default:
@@ -58,7 +68,12 @@ export class EmailProcessor extends WorkerHost {
   @OnWorkerEvent('completed')
   onCompleted(job: Job<EmailJobData>) {
     this.logger.info(
-      { jobId: job.id, jobName: job.name, to: job.data.to, correlationId: job.data.correlationId },
+      {
+        jobId: job.id,
+        jobName: job.name,
+        to: job.data.to,
+        correlationId: job.data.correlationId,
+      },
       'email_job_completed',
     );
   }

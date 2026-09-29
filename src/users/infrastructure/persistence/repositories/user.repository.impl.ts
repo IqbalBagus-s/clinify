@@ -4,7 +4,10 @@ import { Role } from '../../../../generated/prisma/client';
 import { TransactionContext } from 'src/common/domain/transaction-context';
 import { PrismaTransactionClient } from 'src/prisma/prisma.types';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { CreateUserInput, IUserRepository } from 'src/users/domain/interfaces/user.repository.interface';
+import {
+  CreateUserInput,
+  IUserRepository,
+} from 'src/users/domain/interfaces/user.repository.interface';
 import { UserEntity } from 'src/users/domain/entities/user.entity';
 import { UserMapper } from '../mappers/user.mapper';
 
@@ -12,7 +15,10 @@ import { UserMapper } from '../mappers/user.mapper';
 export class UserRepositoryImpl implements IUserRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async createWithinTransaction(tx: TransactionContext, input: CreateUserInput): Promise<UserEntity> {
+  async createWithinTransaction(
+    tx: TransactionContext,
+    input: CreateUserInput,
+  ): Promise<UserEntity> {
     const client = tx as PrismaTransactionClient;
     const user = await client.user.create({
       data: {
@@ -35,7 +41,10 @@ export class UserRepositoryImpl implements IUserRepository {
   }
 
   async markEmailVerified(userId: string): Promise<void> {
-    await this.prisma.user.update({ where: { id: userId }, data: { emailVerifiedAt: new Date() } });
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { emailVerifiedAt: new Date() },
+    });
   }
 
   async findById(id: string): Promise<UserEntity | null> {
@@ -50,7 +59,9 @@ export class UserRepositoryImpl implements IUserRepository {
 
   async findByIdentifier(identifier: string): Promise<UserEntity | null> {
     const user = await this.prisma.user.findFirst({
-      where: { OR: [{ username: identifier }, { email: identifier.toLowerCase() }] },
+      where: {
+        OR: [{ username: identifier }, { email: identifier.toLowerCase() }],
+      },
     });
     return user ? UserMapper.toDomain(user) : null;
   }
@@ -67,15 +78,28 @@ export class UserRepositoryImpl implements IUserRepository {
   async recordSuccessfulLogin(userId: string): Promise<void> {
     await this.prisma.user.update({
       where: { id: userId },
-      data: { failedLoginAttempts: 0, lastLoginAt: new Date(), lockedUntil: null },
+      data: {
+        failedLoginAttempts: 0,
+        lastLoginAt: new Date(),
+        lockedUntil: null,
+      },
     });
   }
 
   async lockAccount(userId: string, lockedUntil: Date): Promise<void> {
-    await this.prisma.user.update({ where: { id: userId }, data: { lockedUntil } });
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { lockedUntil },
+    });
   }
 
-  async updatePasswordHash(userId: string, passwordHash: string): Promise<void> {
-    await this.prisma.user.update({ where: { id: userId }, data: { passwordHash } });
+  async updatePasswordHash(
+    userId: string,
+    passwordHash: string,
+  ): Promise<void> {
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { passwordHash },
+    });
   }
 }

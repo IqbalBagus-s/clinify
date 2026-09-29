@@ -10,7 +10,8 @@ import type { IUserRepository } from 'src/users/domain/interfaces/user.repositor
 @Injectable()
 export class VerifyEmailUseCase {
   constructor(
-    @Inject(EMAIL_VERIFICATION_TOKEN_REPOSITORY) private readonly tokenRepository: IEmailVerificationTokenRepository,
+    @Inject(EMAIL_VERIFICATION_TOKEN_REPOSITORY)
+    private readonly tokenRepository: IEmailVerificationTokenRepository,
     @Inject(USER_REPOSITORY) private readonly userRepository: IUserRepository,
   ) {}
 

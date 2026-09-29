@@ -2,7 +2,10 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
-import { REFRESH_TOKEN_REPOSITORY, TOKEN_BLACKLIST } from '../../domain/interfaces/tokens';
+import {
+  REFRESH_TOKEN_REPOSITORY,
+  TOKEN_BLACKLIST,
+} from '../../domain/interfaces/tokens';
 import type { IRefreshTokenRepository } from '../../domain/interfaces/refresh-token.repository.interface';
 import type { ITokenBlacklist } from '../../domain/interfaces/token-blacklist.interface';
 
@@ -11,7 +14,8 @@ export class LogoutUseCase {
   constructor(
     @InjectPinoLogger(LogoutUseCase.name) private readonly logger: PinoLogger,
     private readonly configService: ConfigService,
-    @Inject(REFRESH_TOKEN_REPOSITORY) private readonly refreshTokenRepository: IRefreshTokenRepository,
+    @Inject(REFRESH_TOKEN_REPOSITORY)
+    private readonly refreshTokenRepository: IRefreshTokenRepository,
     @Inject(TOKEN_BLACKLIST) private readonly tokenBlacklist: ITokenBlacklist,
   ) {}
 
@@ -24,9 +28,15 @@ export class LogoutUseCase {
 
     await this.refreshTokenRepository.revoke(sessionId);
 
-    const ttlSeconds = this.configService.get<number>('jwt.accessTokenTtlSeconds', 900);
+    const ttlSeconds = this.configService.get<number>(
+      'jwt.accessTokenTtlSeconds',
+      900,
+    );
     await this.tokenBlacklist.add(sessionId, ttlSeconds);
 
-    this.logger.info({ sessionId, userId: existingToken.userId }, 'user_logged_out');
+    this.logger.info(
+      { sessionId, userId: existingToken.userId },
+      'user_logged_out',
+    );
   }
 }

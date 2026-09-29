@@ -6,7 +6,8 @@ interface RequestContextStore {
 }
 
 export class RequestContextService {
-  private static readonly storage = new AsyncLocalStorage<RequestContextStore>();
+  private static readonly storage =
+    new AsyncLocalStorage<RequestContextStore>();
 
   static run<T>(store: RequestContextStore, callback: () => T): T {
     return this.storage.run(store, callback);

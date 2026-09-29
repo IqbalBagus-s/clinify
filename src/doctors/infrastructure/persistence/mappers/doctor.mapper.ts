@@ -4,6 +4,11 @@ import { DoctorEntity } from 'src/doctors/domain/entities/doctor.entity';
 
 export class DoctorMapper {
   static toDomain(raw: PrismaDoctor): DoctorEntity {
-    return new DoctorEntity(raw.userId, raw.sip, raw.specializationId, raw.status);
+    return new DoctorEntity(
+      raw.userId,
+      raw.sip,
+      raw.specializationId,
+      raw.status,
+    );
   }
 }

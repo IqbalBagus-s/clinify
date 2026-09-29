@@ -20,12 +20,15 @@ import type { IUserRepository } from 'src/users/domain/interfaces/user.repositor
 @Injectable()
 export class ResetPasswordUseCase {
   constructor(
-    @InjectPinoLogger(ResetPasswordUseCase.name) private readonly logger: PinoLogger,
+    @InjectPinoLogger(ResetPasswordUseCase.name)
+    private readonly logger: PinoLogger,
     private readonly configService: ConfigService,
-    @Inject(PASSWORD_RESET_TOKEN_REPOSITORY) private readonly tokenRepository: IPasswordResetTokenRepository,
+    @Inject(PASSWORD_RESET_TOKEN_REPOSITORY)
+    private readonly tokenRepository: IPasswordResetTokenRepository,
     @Inject(USER_REPOSITORY) private readonly userRepository: IUserRepository,
     @Inject(PASSWORD_HASHER) private readonly passwordHasher: IPasswordHasher,
-    @Inject(REFRESH_TOKEN_REPOSITORY) private readonly refreshTokenRepository: IRefreshTokenRepository,
+    @Inject(REFRESH_TOKEN_REPOSITORY)
+    private readonly refreshTokenRepository: IRefreshTokenRepository,
     @Inject(TOKEN_BLACKLIST) private readonly tokenBlacklist: ITokenBlacklist,
   ) {}
 
@@ -42,11 +45,21 @@ export class ResetPasswordUseCase {
     await this.tokenRepository.markAsUsed(token.id);
     await this.userRepository.updatePasswordHash(token.userId, newPasswordHash);
 
-    const revokedIds = await this.refreshTokenRepository.revokeAllForUser(token.userId);
+    const revokedIds = await this.refreshTokenRepository.revokeAllForUser(
+      token.userId,
+    );
 
-    const ttlSeconds = this.configService.get<number>('jwt.accessTokenTtlSeconds', 900);
-    await Promise.all(revokedIds.map((id) => this.tokenBlacklist.add(id, ttlSeconds)));
+    const ttlSeconds = this.configService.get<number>(
+      'jwt.accessTokenTtlSeconds',
+      900,
+    );
+    await Promise.all(
+      revokedIds.map((id) => this.tokenBlacklist.add(id, ttlSeconds)),
+    );
 
-    this.logger.info({ userId: token.userId, revokedCount: revokedIds.length }, 'password_reset_completed');
+    this.logger.info(
+      { userId: token.userId, revokedCount: revokedIds.length },
+      'password_reset_completed',
+    );
   }
 }

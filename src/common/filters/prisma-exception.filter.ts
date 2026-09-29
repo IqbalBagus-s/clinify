@@ -48,6 +48,10 @@ export class PrismaExceptionFilter implements ExceptionFilter {
         message: 'Nomor izin praktik sudah terdaftar.',
       };
     }
-    return { statusCode: 409, errorCode: 'DUPLICATE_ENTRY', message: 'Data sudah ada sebelumnya.' };
+    return {
+      statusCode: 409,
+      errorCode: 'DUPLICATE_ENTRY',
+      message: 'Data sudah ada sebelumnya.',
+    };
   }
 }

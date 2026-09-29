@@ -4,7 +4,9 @@ import { AccessTokenPayload } from 'src/auth/domain/interfaces/token.service.int
 
 export const CurrentUser = createParamDecorator(
   (data: unknown, ctx: ExecutionContext): AccessTokenPayload => {
-    const request = ctx.switchToHttp().getRequest<Request & { user?: AccessTokenPayload }>();
+    const request = ctx
+      .switchToHttp()
+      .getRequest<Request & { user?: AccessTokenPayload }>();
     return request.user as AccessTokenPayload;
   },
 );

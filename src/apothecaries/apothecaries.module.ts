@@ -6,7 +6,9 @@ import { ApothecaryRepositoryImpl } from './infrastructure/persistence/repositor
 
 @Module({
   imports: [PrismaModule],
-  providers: [{ provide: APOTHECARY_REPOSITORY, useClass: ApothecaryRepositoryImpl }],
+  providers: [
+    { provide: APOTHECARY_REPOSITORY, useClass: ApothecaryRepositoryImpl },
+  ],
   exports: [APOTHECARY_REPOSITORY],
 })
 export class ApothecariesModule {}

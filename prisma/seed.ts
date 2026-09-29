@@ -14,7 +14,13 @@ async function main() {
   //    upsert() dipakai (bukan create()) supaya skrip ini AMAN dijalankan
   //    berulang kali tanpa error "unique constraint violation" pada `name`.
   // --------------------------------------------------------------------
-  const specializationNames = ['Umum', 'Gigi', 'Anak', 'Penyakit Dalam', 'Kandungan'];
+  const specializationNames = [
+    'Umum',
+    'Gigi',
+    'Anak',
+    'Penyakit Dalam',
+    'Kandungan',
+  ];
 
   for (const name of specializationNames) {
     await prisma.specialization.upsert({
@@ -31,7 +37,9 @@ async function main() {
   //    setiap kali skrip ini dijalankan ulang.
   // --------------------------------------------------------------------
   const adminEmail = 'admin@clinic.local';
-  const existingAdmin = await prisma.user.findUnique({ where: { email: adminEmail } });
+  const existingAdmin = await prisma.user.findUnique({
+    where: { email: adminEmail },
+  });
 
   if (existingAdmin) {
     console.log('✔ Akun admin sudah ada, dilewati.');
@@ -61,8 +69,12 @@ async function main() {
     },
   });
 
-  console.log(`✔ Akun admin dibuat -> email: ${adminEmail} | password: ChangeMe123!`);
-  console.log('  Ganti password ini lewat change-password use-case setelah login pertama.');
+  console.log(
+    `✔ Akun admin dibuat -> email: ${adminEmail} | password: ChangeMe123!`,
+  );
+  console.log(
+    '  Ganti password ini lewat change-password use-case setelah login pertama.',
+  );
 }
 
 main()

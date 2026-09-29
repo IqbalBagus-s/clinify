@@ -1,5 +1,10 @@
 // src/auth/presentation/validators/is-registerable-role.validator.ts
-import { registerDecorator, ValidationOptions, ValidatorConstraint, ValidatorConstraintInterface } from 'class-validator';
+import {
+  registerDecorator,
+  ValidationOptions,
+  ValidatorConstraint,
+  ValidatorConstraintInterface,
+} from 'class-validator';
 import { RegisterableRole } from 'src/auth/domain/enums/registerable-role.enum';
 
 @ValidatorConstraint({ name: 'IsRegisterableRole', async: false })

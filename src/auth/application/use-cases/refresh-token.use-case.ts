@@ -4,7 +4,10 @@ import { ConfigService } from '@nestjs/config';
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import { randomBytes, createHash } from 'crypto';
 import { RefreshTokenInvalidException } from '../../domain/exceptions/refresh-token-invalid.exception';
-import { TOKEN_SERVICE, REFRESH_TOKEN_REPOSITORY } from '../../domain/interfaces/tokens';
+import {
+  TOKEN_SERVICE,
+  REFRESH_TOKEN_REPOSITORY,
+} from '../../domain/interfaces/tokens';
 import type { ITokenService } from '../../domain/interfaces/token.service.interface';
 import type { IRefreshTokenRepository } from '../../domain/interfaces/refresh-token.repository.interface';
 import { USER_REPOSITORY } from 'src/users/domain/interfaces/tokens';
@@ -25,16 +28,24 @@ export interface RefreshTokenResult {
 @Injectable()
 export class RefreshTokenUseCase {
   constructor(
-    @InjectPinoLogger(RefreshTokenUseCase.name) private readonly logger: PinoLogger,
+    @InjectPinoLogger(RefreshTokenUseCase.name)
+    private readonly logger: PinoLogger,
     private readonly configService: ConfigService,
     @Inject(USER_REPOSITORY) private readonly userRepository: IUserRepository,
     @Inject(TOKEN_SERVICE) private readonly tokenService: ITokenService,
-    @Inject(REFRESH_TOKEN_REPOSITORY) private readonly refreshTokenRepository: IRefreshTokenRepository,
+    @Inject(REFRESH_TOKEN_REPOSITORY)
+    private readonly refreshTokenRepository: IRefreshTokenRepository,
   ) {}
 
-  async execute(rawRefreshToken: string, metadata: RefreshTokenMetadata): Promise<RefreshTokenResult> {
-    const tokenHash = createHash('sha256').update(rawRefreshToken).digest('hex');
-    const existingToken = await this.refreshTokenRepository.findByTokenHash(tokenHash);
+  async execute(
+    rawRefreshToken: string,
+    metadata: RefreshTokenMetadata,
+  ): Promise<RefreshTokenResult> {
+    const tokenHash = createHash('sha256')
+      .update(rawRefreshToken)
+      .digest('hex');
+    const existingToken =
+      await this.refreshTokenRepository.findByTokenHash(tokenHash);
 
     if (!existingToken || !existingToken.isValid()) {
       throw new RefreshTokenInvalidException();
@@ -49,13 +60,16 @@ export class RefreshTokenUseCase {
     await this.refreshTokenRepository.revoke(existingToken.id);
 
     const rawNewRefreshToken = randomBytes(40).toString('hex');
-    const newTokenHash = createHash('sha256').update(rawNewRefreshToken).digest('hex');
+    const newTokenHash = createHash('sha256')
+      .update(rawNewRefreshToken)
+      .digest('hex');
 
     // PENTING: expiresAt token baru MEWARISI sisa masa berlaku sesi asal
     // (bukan direset ke default 7/30 hari). Ini mencegah sesi diperpanjang
     // tanpa batas hanya dengan terus memanggil refresh berulang kali —
     // sesi tetap akan berakhir sesuai waktu login awal.
-    const inheritedExpiresAt = existingToken.expiresAt ?? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    const inheritedExpiresAt =
+      existingToken.expiresAt ?? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
     const newRefreshTokenEntity = await this.refreshTokenRepository.create({
       userId: user.id,
@@ -72,13 +86,20 @@ export class RefreshTokenUseCase {
     });
 
     this.logger.info(
-      { userId: user.id, oldSessionId: existingToken.id, newSessionId: newRefreshTokenEntity.id },
+      {
+        userId: user.id,
+        oldSessionId: existingToken.id,
+        newSessionId: newRefreshTokenEntity.id,
+      },
       'refresh_token_rotated',
     );
 
     return {
       accessToken,
-      expiresIn: this.configService.get<number>('jwt.accessTokenTtlSeconds', 900),
+      expiresIn: this.configService.get<number>(
+        'jwt.accessTokenTtlSeconds',
+        900,
+      ),
       refreshToken: rawNewRefreshToken,
       refreshTokenExpiresAt: inheritedExpiresAt,
     };

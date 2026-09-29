@@ -1,6 +1,10 @@
 // src/health/health.controller.ts
 import { Controller, Get } from '@nestjs/common';
-import { HealthCheck, HealthCheckService, HealthIndicatorResult } from '@nestjs/terminus';
+import {
+  HealthCheck,
+  HealthCheckService,
+  HealthIndicatorResult,
+} from '@nestjs/terminus';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { RedisService } from 'src/redis/redis.service';
 
@@ -26,7 +30,9 @@ export class HealthController {
       await this.prisma.$queryRaw`SELECT 1`;
       return { database: { status: 'up' } };
     } catch (error) {
-      return { database: { status: 'down', message: (error as Error).message } };
+      return {
+        database: { status: 'down', message: (error as Error).message },
+      };
     }
   }
 

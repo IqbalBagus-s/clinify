@@ -2,12 +2,15 @@
 import { IsBoolean, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class LoginDto {
-  @IsString() @IsNotEmpty()
+  @IsString()
+  @IsNotEmpty()
   identifier: string;
 
-  @IsString() @IsNotEmpty()
+  @IsString()
+  @IsNotEmpty()
   password: string;
 
-  @IsOptional() @IsBoolean()
+  @IsOptional()
+  @IsBoolean()
   remember_me?: boolean;
 }

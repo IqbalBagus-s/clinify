@@ -1,8 +1,20 @@
 // src/auth/presentation/guards/jwt-auth.guard.ts
-import { CanActivate, ExecutionContext, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  CanActivate,
+  ExecutionContext,
+  Inject,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { Request } from 'express';
-import { TOKEN_BLACKLIST, TOKEN_SERVICE } from 'src/auth/domain/interfaces/tokens';
-import type { AccessTokenPayload, ITokenService } from 'src/auth/domain/interfaces/token.service.interface';
+import {
+  TOKEN_BLACKLIST,
+  TOKEN_SERVICE,
+} from 'src/auth/domain/interfaces/tokens';
+import type {
+  AccessTokenPayload,
+  ITokenService,
+} from 'src/auth/domain/interfaces/token.service.interface';
 import type { ITokenBlacklist } from 'src/auth/domain/interfaces/token-blacklist.interface';
 
 @Injectable()
@@ -14,11 +26,16 @@ export class JwtAuthGuard implements CanActivate {
 
   // Guard sekarang async karena isBlacklisted() melibatkan I/O ke Redis.
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const request = context.switchToHttp().getRequest<Request & { user?: AccessTokenPayload }>();
+    const request = context
+      .switchToHttp()
+      .getRequest<Request & { user?: AccessTokenPayload }>();
     const authHeader = request.headers['authorization'];
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      throw new UnauthorizedException({ errorCode: 'UNAUTHORIZED', message: 'Unauthorized' });
+      throw new UnauthorizedException({
+        errorCode: 'UNAUTHORIZED',
+        message: 'Unauthorized',
+      });
     }
 
     const token = authHeader.slice('Bearer '.length);
@@ -27,7 +44,10 @@ export class JwtAuthGuard implements CanActivate {
     try {
       payload = this.tokenService.verifyAccessToken(token);
     } catch {
-      throw new UnauthorizedException({ errorCode: 'UNAUTHORIZED', message: 'Unauthorized' });
+      throw new UnauthorizedException({
+        errorCode: 'UNAUTHORIZED',
+        message: 'Unauthorized',
+      });
     }
 
     // Ini yang menutup celah sebelumnya: walau signature & exp masih valid,
@@ -35,7 +55,10 @@ export class JwtAuthGuard implements CanActivate {
     // logout/reset-password/change-password), request tetap ditolak.
     const isBlacklisted = await this.tokenBlacklist.isBlacklisted(payload.sid);
     if (isBlacklisted) {
-      throw new UnauthorizedException({ errorCode: 'UNAUTHORIZED', message: 'Unauthorized' });
+      throw new UnauthorizedException({
+        errorCode: 'UNAUTHORIZED',
+        message: 'Unauthorized',
+      });
     }
 
     request.user = payload;

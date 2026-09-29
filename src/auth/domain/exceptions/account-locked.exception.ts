@@ -6,6 +6,8 @@ export class AccountLockedException extends DomainException {
   readonly errorCode = 'ACCOUNT_LOCKED';
 
   constructor() {
-    super('Akun terkunci sementara karena terlalu banyak percobaan gagal. Silakan coba lagi nanti.');
+    super(
+      'Akun terkunci sementara karena terlalu banyak percobaan gagal. Silakan coba lagi nanti.',
+    );
   }
 }
