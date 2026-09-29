@@ -27,6 +27,7 @@ jobs:
         with:
           node-version-file: .nvmrc
           cache: npm
+      - run: node -v && npm -v
       - run: npm ci
       - run: npm run prisma:generate
       - run: npm run format:check
