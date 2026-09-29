@@ -59,3 +59,12 @@ dist/
 
 # Prisma
 /src/generated/prisma
+
+# Artefak kompilasi tsc yang emit di samping sumber
+/*.d.ts
+/*.js.map
+/vitest.config*.js
+/prisma7.config.js
+/prisma/seed.js
+/prisma/seed.d.ts
+/prisma/seed.js.map
