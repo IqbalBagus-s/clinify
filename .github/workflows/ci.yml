@@ -27,6 +27,8 @@ jobs:
         with:
           node-version-file: .nvmrc
           cache: npm
+      - name: Samakan npm dengan lokal
+        run: npm install -g npm@11.19.0
       - run: node -v && npm -v
       - run: npm ci
       - run: npm run prisma:generate
