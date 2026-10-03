@@ -4,6 +4,13 @@ import { EmailVerificationTokenEntity } from 'src/auth/domain/entities/email-ver
 
 export class EmailVerificationTokenMapper {
   static toDomain(raw: PrismaToken): EmailVerificationTokenEntity {
-    return new EmailVerificationTokenEntity(raw.id, raw.userId, raw.tokenHash, raw.expiresAt, raw.usedAt, raw.createdAt);
+    return new EmailVerificationTokenEntity(
+      raw.id,
+      raw.userId,
+      raw.tokenHash,
+      raw.expiresAt,
+      raw.usedAt,
+      raw.createdAt,
+    );
   }
 }

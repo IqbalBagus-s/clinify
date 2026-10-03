@@ -6,10 +6,7 @@ import { TRANSACTION_MANAGER } from 'src/common/domain/tokens';
 
 @Global()
 @Module({
-  providers: [
-    PrismaService,
-    { provide: TRANSACTION_MANAGER, useClass: PrismaTransactionManager },
-  ],
+  providers: [PrismaService, { provide: TRANSACTION_MANAGER, useClass: PrismaTransactionManager }],
   exports: [PrismaService, TRANSACTION_MANAGER],
 })
 export class PrismaModule {}
