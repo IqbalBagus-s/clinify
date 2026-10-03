@@ -1,6 +1,6 @@
 // src/patients/infrastructure/services/medical-record-number-generator.impl.ts
 import { Injectable } from '@nestjs/common';
-import { randomInt } from 'crypto';
+import { randomInt } from 'node:crypto';
 import { IMedicalRecordNumberGenerator } from 'src/patients/domain/interfaces/medical-record-number-generator.interface';
 
 @Injectable()

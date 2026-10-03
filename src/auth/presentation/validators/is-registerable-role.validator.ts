@@ -18,7 +18,7 @@ class IsRegisterableRoleConstraint implements ValidatorConstraintInterface {
 }
 
 export function IsRegisterableRole(validationOptions?: ValidationOptions) {
-  return function (object: object, propertyName: string) {
+  return (object: object, propertyName: string) => {
     registerDecorator({
       target: object.constructor,
       propertyName,

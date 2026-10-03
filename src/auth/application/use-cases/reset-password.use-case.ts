@@ -2,7 +2,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
-import { createHash } from 'crypto';
+import { createHash } from 'node:crypto';
 import {
   PASSWORD_HASHER,
   PASSWORD_RESET_TOKEN_REPOSITORY,
@@ -33,7 +33,7 @@ export class ResetPasswordUseCase {
     const tokenHash = createHash('sha256').update(rawToken).digest('hex');
     const token = await this.tokenRepository.findByTokenHash(tokenHash);
 
-    if (!token || !token.isValid()) {
+    if (!token?.isValid()) {
       throw new InvalidOrExpiredTokenException();
     }
 

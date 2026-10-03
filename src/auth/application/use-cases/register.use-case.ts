@@ -2,7 +2,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PinoLogger, InjectPinoLogger } from 'nestjs-pino';
-import { randomBytes, createHash } from 'crypto';
+import { randomBytes, createHash } from 'node:crypto';
 import { TRANSACTION_MANAGER } from 'src/common/domain/tokens';
 import type { ITransactionManager } from 'src/common/domain/transaction-manager.interface';
 import { RegisterDto } from '../../presentation/dto/register.dto';

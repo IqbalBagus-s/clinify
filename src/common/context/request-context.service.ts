@@ -9,10 +9,10 @@ export class RequestContextService {
   private static readonly storage = new AsyncLocalStorage<RequestContextStore>();
 
   static run<T>(store: RequestContextStore, callback: () => T): T {
-    return this.storage.run(store, callback);
+    return RequestContextService.storage.run(store, callback);
   }
 
   static getCorrelationId(): string | undefined {
-    return this.storage.getStore()?.correlationId;
+    return RequestContextService.storage.getStore()?.correlationId;
   }
 }

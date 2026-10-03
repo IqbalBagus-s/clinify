@@ -2,7 +2,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
-import { randomBytes, createHash } from 'crypto';
+import { randomBytes, createHash } from 'node:crypto';
 import { EMAIL_SERVICE, PASSWORD_RESET_TOKEN_REPOSITORY } from '../../domain/interfaces/tokens';
 import type { IEmailService } from '../../domain/interfaces/email.service.interface';
 import type { IPasswordResetTokenRepository } from '../../domain/interfaces/password-reset-token.repository.interface';
