@@ -59,3 +59,11 @@ dist/
 
 # Prisma
 /src/generated/prisma
+
+# Build artifacts
+*.tsbuildinfo
+*.js.map
+/prisma/seed.js
+/prisma7.config.js
+/vitest.config.js
+/vitest.config.e2e.js
