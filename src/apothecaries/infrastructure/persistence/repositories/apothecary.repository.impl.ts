@@ -3,7 +3,10 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { TransactionContext } from 'src/common/domain/transaction-context';
 import { PrismaTransactionClient } from 'src/prisma/prisma.types';
-import { CreateApothecaryInput, IApothecaryRepository } from 'src/apothecaries/domain/interfaces/apothecary.repository.interface';
+import {
+  CreateApothecaryInput,
+  IApothecaryRepository,
+} from 'src/apothecaries/domain/interfaces/apothecary.repository.interface';
 import { ApothecaryEntity } from 'src/apothecaries/domain/entities/apothecary.entity';
 import { ApothecaryMapper } from '../mappers/apothecary.mapper';
 

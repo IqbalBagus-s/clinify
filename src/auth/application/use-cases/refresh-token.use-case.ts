@@ -2,7 +2,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
-import { randomBytes, createHash } from 'crypto';
+import { randomBytes, createHash } from 'node:crypto';
 import { RefreshTokenInvalidException } from '../../domain/exceptions/refresh-token-invalid.exception';
 import { TOKEN_SERVICE, REFRESH_TOKEN_REPOSITORY } from '../../domain/interfaces/tokens';
 import type { ITokenService } from '../../domain/interfaces/token.service.interface';
@@ -36,7 +36,7 @@ export class RefreshTokenUseCase {
     const tokenHash = createHash('sha256').update(rawRefreshToken).digest('hex');
     const existingToken = await this.refreshTokenRepository.findByTokenHash(tokenHash);
 
-    if (!existingToken || !existingToken.isValid()) {
+    if (!existingToken?.isValid()) {
       throw new RefreshTokenInvalidException();
     }
 

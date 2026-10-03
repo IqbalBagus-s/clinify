@@ -2,7 +2,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
-import { randomBytes, createHash } from 'crypto';
+import { randomBytes, createHash } from 'node:crypto';
 import { LoginDto } from '../../presentation/dto/login.dto';
 import { InvalidCredentialsException } from '../../domain/exceptions/invalid-credentials.exception';
 import { AccountLockedException } from '../../domain/exceptions/account-locked.exception';

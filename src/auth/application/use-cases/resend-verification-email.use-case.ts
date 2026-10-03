@@ -1,7 +1,7 @@
 // src/auth/application/use-cases/resend-verification-email.use-case.ts
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { randomBytes, createHash } from 'crypto';
+import { randomBytes, createHash } from 'node:crypto';
 import { EMAIL_SERVICE, EMAIL_VERIFICATION_TOKEN_REPOSITORY } from '../../domain/interfaces/tokens';
 import type { IEmailVerificationTokenRepository } from '../../domain/interfaces/email-verification-token.repository.interface';
 import type { IEmailService } from '../../domain/interfaces/email.service.interface';

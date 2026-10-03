@@ -2,7 +2,8 @@
 import { IsNotEmpty, IsString, Matches, MaxLength } from 'class-validator';
 
 export class ChangePasswordDto {
-  @IsString() @IsNotEmpty()
+  @IsString()
+  @IsNotEmpty()
   old_password: string;
 
   @IsString()

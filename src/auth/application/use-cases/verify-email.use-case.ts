@@ -1,6 +1,6 @@
 // src/auth/application/use-cases/verify-email.use-case.ts
 import { Inject, Injectable } from '@nestjs/common';
-import { createHash } from 'crypto';
+import { createHash } from 'node:crypto';
 import { EMAIL_VERIFICATION_TOKEN_REPOSITORY } from '../../domain/interfaces/tokens';
 import type { IEmailVerificationTokenRepository } from '../../domain/interfaces/email-verification-token.repository.interface';
 import { InvalidOrExpiredTokenException } from '../../domain/exceptions/invalid-or-expired-token.exception';
@@ -18,7 +18,7 @@ export class VerifyEmailUseCase {
     const tokenHash = createHash('sha256').update(rawToken).digest('hex');
     const token = await this.tokenRepository.findByTokenHash(tokenHash);
 
-    if (!token || !token.isValid()) {
+    if (!token?.isValid()) {
       throw new InvalidOrExpiredTokenException();
     }
 

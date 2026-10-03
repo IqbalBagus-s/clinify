@@ -33,7 +33,11 @@ export class RateLimitGuard implements CanActivate {
     if (currentCount > this.limit) {
       this.logger.warn({ message: 'rate_limit_exceeded', route: request.route?.path, ip: request.ip, currentCount });
       throw new HttpException(
-        { statusCode: HttpStatus.TOO_MANY_REQUESTS, errorCode: 'RATE_LIMIT_EXCEEDED', message: 'Terlalu banyak percobaan. Silakan coba lagi nanti.' },
+        {
+          statusCode: HttpStatus.TOO_MANY_REQUESTS,
+          errorCode: 'RATE_LIMIT_EXCEEDED',
+          message: 'Terlalu banyak percobaan. Silakan coba lagi nanti.',
+        },
         HttpStatus.TOO_MANY_REQUESTS,
       );
     }

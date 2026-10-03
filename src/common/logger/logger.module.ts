@@ -1,7 +1,7 @@
 // src/common/logger/logger.module.ts
 import { Global, Module } from '@nestjs/common';
 import { LoggerModule as PinoLoggerModule } from 'nestjs-pino';
-import { randomUUID } from 'crypto';
+import { randomUUID } from 'node:crypto';
 
 // PERBAIKAN: tambahkan @Global() supaya PinoLogger yang disediakan
 // PinoLoggerModule bisa di-inject di mana pun di seluruh aplikasi
@@ -31,7 +31,7 @@ import { randomUUID } from 'crypto';
           return id;
         },
 
-        customLogLevel: (req, res, err) => {
+        customLogLevel: (_req, res, err) => {
           if (res.statusCode >= 500 || err) return 'error';
           if (res.statusCode >= 400) return 'warn';
           return 'info';

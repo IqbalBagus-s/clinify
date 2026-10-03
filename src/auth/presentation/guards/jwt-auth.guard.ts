@@ -15,9 +15,9 @@ export class JwtAuthGuard implements CanActivate {
   // Guard sekarang async karena isBlacklisted() melibatkan I/O ke Redis.
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<Request & { user?: AccessTokenPayload }>();
-    const authHeader = request.headers['authorization'];
+    const authHeader = request.headers.authorization;
 
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    if (!authHeader?.startsWith('Bearer ')) {
       throw new UnauthorizedException({ errorCode: 'UNAUTHORIZED', message: 'Unauthorized' });
     }
 
