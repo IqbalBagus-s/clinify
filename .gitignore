@@ -67,3 +67,7 @@ dist/
 /prisma7.config.js
 /vitest.config.js
 /vitest.config.e2e.js
+/prisma/seed.d.ts
+/prisma7.config.d.ts
+/vitest.config.d.ts
+/vitest.config.e2e.d.ts
